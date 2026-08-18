@@ -1,0 +1,70 @@
+{
+  "App": {
+    "name": "LinguaDeck",
+    "tagline": "Small daily reps for words that stick",
+    "search": "Search words",
+    "review": "Review",
+    "learn": "Learn",
+    "settings": "Settings",
+    "empty": "Nothing here yet"
+  },
+  "Nav": {
+    "today": "Today",
+    "learn": "Learn",
+    "review": "Review",
+    "words": "Words",
+    "decks": "Decks",
+    "stats": "Stats",
+    "settings": "Settings"
+  },
+  "Today": {
+    "title": "Today",
+    "subtitle": "A focused queue for new words, reviews, and one quick win.",
+    "newWords": "New words",
+    "dueReviews": "Due reviews",
+    "streak": "Day streak",
+    "start": "Start session"
+  },
+  "Learn": {
+    "title": "Learn",
+    "subtitle": "Add a word with context, pronunciation notes, and a deck.",
+    "word": "Word",
+    "meaning": "Meaning",
+    "example": "Example sentence",
+    "deck": "Deck",
+    "save": "Save word"
+  },
+  "Review": {
+    "title": "Review",
+    "subtitle": "Rate recall honestly. The schedule adapts without AI.",
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy"
+  },
+  "Words": {
+    "title": "Words",
+    "subtitle": "Your vocabulary library, grouped by deck and memory state."
+  },
+  "Decks": {
+    "title": "Decks",
+    "subtitle": "Keep topics tidy and review them at the right rhythm.",
+    "words": "{count, plural, one {# word} other {# words}}"
+  },
+  "Stats": {
+    "title": "Stats",
+    "subtitle": "Progress, retention, and review load at a glance.",
+    "retention": "Retention",
+    "learned": "Learned",
+    "reviews": "Reviews"
+  },
+  "Settings": {
+    "title": "Settings",
+    "subtitle": "Language, theme, and study preferences.",
+    "language": "Language",
+    "theme": "Theme",
+    "dailyGoal": "Daily goal",
+    "ai": "Optional AI",
+    "aiDescription": "Provider-independent hooks are configured, but core study flows work offline from AI."
+  }
+}
