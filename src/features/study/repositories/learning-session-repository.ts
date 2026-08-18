@@ -1,4 +1,4 @@
-import {and, desc, eq} from "drizzle-orm";
+import {and, desc, eq, isNull} from "drizzle-orm";
 import {db} from "@/db/client";
 import {learningSessions} from "@/db/schema";
 
@@ -12,6 +12,19 @@ export type CompleteLearningSessionInput = {
 };
 
 export class LearningSessionRepository {
+  async startOrResume(ownerId: string) {
+    const open = await db.query.learningSessions.findFirst({
+      where: and(eq(learningSessions.ownerId, ownerId), isNull(learningSessions.completedAt)),
+      orderBy: desc(learningSessions.startedAt)
+    });
+
+    if (open) {
+      return open;
+    }
+
+    return this.start(ownerId);
+  }
+
   async start(ownerId: string) {
     const [row] = await db.insert(learningSessions).values({ownerId}).returning();
 

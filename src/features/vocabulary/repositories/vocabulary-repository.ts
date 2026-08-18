@@ -104,8 +104,7 @@ export class DrizzleVocabularyRepository implements VocabularyRepository {
         and(eq(cards.id, reviewState.cardId), eq(cards.ownerId, reviewState.ownerId))
       )
       .where(and(eq(cards.ownerId, userId), lte(reviewState.nextReviewAt, dueAt)))
-      .orderBy(asc(reviewState.nextReviewAt))
-      .limit(20);
+      .orderBy(asc(reviewState.nextReviewAt), asc(cards.english));
 
     const tagMap = await this.getTagsByCardId(userId);
     return rows.map(({card, deckName, state}) =>

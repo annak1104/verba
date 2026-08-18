@@ -1,15 +1,20 @@
 "use client";
 
+import {useState} from "react";
 import {useLocale, useTranslations} from "next-intl";
-import {Languages, Sparkles} from "lucide-react";
+import {Languages, Sparkles, ArrowLeftRight} from "lucide-react";
 import {GlassCard} from "@/components/ui/glass-card";
 import {Label} from "@/components/ui/label";
 import {Switch} from "@/components/ui/switch";
+import {DirectionToggle} from "@/features/review/components/direction-toggle";
+import {normalizeReviewDirection} from "@/features/review/card-content";
+import type {UserSettings} from "@/features/vocabulary/types";
 import {ThemeToggle} from "./theme-toggle";
 
-export function SettingsPanel() {
+export function SettingsPanel({settings}: Readonly<{settings: UserSettings}>) {
   const t = useTranslations("Settings");
   const locale = useLocale();
+  const [direction, setDirection] = useState(normalizeReviewDirection(settings.learningDirection));
 
   return (
     <div className="space-y-3">
@@ -26,6 +31,13 @@ export function SettingsPanel() {
       <GlassCard className="flex items-center justify-between p-5">
           <Label>{t("theme")}</Label>
           <ThemeToggle />
+      </GlassCard>
+      <GlassCard className="flex items-center justify-between gap-3 p-5">
+          <div className="flex items-center gap-2 text-sm font-bold">
+            <ArrowLeftRight className="size-4 text-primary" />
+            {t("learningDirection")}
+          </div>
+          <DirectionToggle value={direction} onValueChange={setDirection} />
       </GlassCard>
       <GlassCard className="space-y-4 p-5">
           <div className="flex items-start gap-3">

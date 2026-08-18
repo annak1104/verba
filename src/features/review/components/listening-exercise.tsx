@@ -1,27 +1,48 @@
 "use client";
 
-import {useState} from "react";
-import {Ear, Eye, SkipForward} from "lucide-react";
+import {useEffect, useState} from "react";
+import {ArrowLeft, ArrowRight, Ear, Eye} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {GlassCard} from "@/components/ui/glass-card";
 import {SpeakerButton} from "@/features/pronunciation/components/speaker-button";
 import {SpeechRateControl} from "@/features/pronunciation/components/speech-rate-control";
-import {useSpeechRate} from "@/features/pronunciation/use-text-to-speech";
+import {
+  useSpeechRate,
+  useTextToSpeech
+} from "@/features/pronunciation/use-text-to-speech";
+import {getReviewCardContent} from "@/features/review/card-content";
+import {
+  createListeningState,
+  getListeningCard,
+  getListeningProgress,
+  goToNextListeningCard,
+  goToPreviousListeningCard,
+  revealListeningAnswer
+} from "@/features/review/listening-state";
 import type {Word} from "@/features/vocabulary/types";
 
 export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
-  const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
+  const [state, setState] = useState(() => createListeningState(cards));
   const {rate, setRate} = useSpeechRate();
-  const currentIndex = cards.length > 0 ? Math.min(index, cards.length - 1) : 0;
-  const current = cards[currentIndex] ?? null;
+  const {stop} = useTextToSpeech();
+  const current = getListeningCard(state);
+  const progress = getListeningProgress(state);
+  const content = getReviewCardContent(current, "ukrainian_to_english");
+
+  useEffect(() => {
+    stop();
+    return stop;
+  }, [current?.id, stop]);
 
   if (!current) return null;
 
   function nextCard() {
-    setIndex((value) => (value + 1) % cards.length);
-    setRevealed(false);
+    setState((value) => goToNextListeningCard(value));
+  }
+
+  function previousCard() {
+    setState((value) => goToPreviousListeningCard(value));
   }
 
   return (
@@ -37,7 +58,7 @@ export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
           </div>
         </div>
         <Badge variant="outline">
-          {currentIndex + 1} / {cards.length}
+          {progress.current} / {progress.total}
         </Badge>
       </div>
 
@@ -52,34 +73,55 @@ export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
           text={current.term}
         />
 
-        <div className="mt-5 min-h-28">
-          {revealed ? (
-            <div className="space-y-2">
-              <h3 className="text-3xl font-bold leading-tight">{current.term}</h3>
-              <p className="text-base font-semibold text-muted-foreground">{current.meaning}</p>
-              {current.pronunciation ? (
-                <p className="text-sm text-muted-foreground">{current.pronunciation}</p>
-              ) : null}
-              {current.ipa ? <p className="text-sm text-muted-foreground">IPA: {current.ipa}</p> : null}
+        <div className="mt-5 min-h-44">
+          {state.revealed ? (
+            <div className="space-y-3 text-left">
+              <div className="text-center">
+                <h3 className="text-3xl font-bold leading-tight">{content.english}</h3>
+                <p className="mt-1 text-base font-semibold text-muted-foreground">{content.ukrainian}</p>
+              </div>
+              <AnswerLine label="Ukrainian pronunciation" value={content.ukrainianPronunciation} />
+              <AnswerLine label="IPA" value={content.ipa} />
+              <AnswerLine label="English example" value={content.exampleEnglish} />
+              <AnswerLine label="Ukrainian example" value={content.exampleUkrainian} muted />
             </div>
           ) : (
-            <div className="flex min-h-28 items-center justify-center rounded-[24px] border border-dashed border-border/70 text-sm font-bold text-muted-foreground">
+            <div className="flex min-h-44 items-center justify-center rounded-[24px] border border-dashed border-border/70 text-sm font-bold text-muted-foreground">
               Hidden word
             </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <Button type="button" variant="glass" onClick={() => setRevealed(true)}>
+      <div className="grid grid-cols-[3rem_minmax(0,1fr)_3rem] gap-2">
+        <Button aria-label="Previous listening card" size="icon" type="button" variant="glass" onClick={previousCard}>
+          <ArrowLeft className="size-4" />
+        </Button>
+        <Button type="button" variant="glass" onClick={() => setState((value) => revealListeningAnswer(value))}>
           <Eye className="size-4" />
           Reveal
         </Button>
-        <Button type="button" variant="glass" onClick={nextCard}>
-          <SkipForward className="size-4" />
-          Next
+        <Button aria-label="Next listening card" size="icon" type="button" variant="glass" onClick={nextCard}>
+          <ArrowRight className="size-4" />
         </Button>
       </div>
     </GlassCard>
+  );
+}
+
+function AnswerLine({
+  label,
+  value,
+  muted = false
+}: Readonly<{label: string; value: string; muted?: boolean}>) {
+  if (!value) return null;
+
+  return (
+    <div>
+      <div className="text-xs font-bold uppercase tracking-normal text-muted-foreground">{label}</div>
+      <p className={muted ? "mt-1 text-sm leading-6 text-muted-foreground" : "mt-1 text-sm leading-6"}>
+        {value}
+      </p>
+    </div>
   );
 }

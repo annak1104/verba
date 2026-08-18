@@ -38,6 +38,8 @@ export function SpeakerButton({
       title={title}
       type="button"
       variant={variant}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
       onClick={(event) => {
         event.stopPropagation();
         void speak(text, rate);

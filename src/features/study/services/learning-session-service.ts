@@ -5,7 +5,7 @@ export async function startLearningSession() {
   const {userId} = await auth.protect();
 
   const {LearningSessionRepository} = await import("../repositories/learning-session-repository");
-  return new LearningSessionRepository().start(userId);
+  return new LearningSessionRepository().startOrResume(userId);
 }
 
 export async function completeLearningSession(

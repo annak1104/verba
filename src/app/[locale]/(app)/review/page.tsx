@@ -1,7 +1,6 @@
 import {getTranslations} from "next-intl/server";
 import {PageHeader} from "@/components/layout/page-header";
-import {FlashcardSession} from "@/features/review/components/flashcard-session";
-import {ListeningExercise} from "@/features/review/components/listening-exercise";
+import {ReviewWorkspace} from "@/features/review/components/review-workspace";
 import {getUserSettings} from "@/features/settings/services/settings-service";
 import {getDueWords} from "@/features/vocabulary/services/vocabulary-service";
 
@@ -12,8 +11,7 @@ export default async function ReviewPage() {
   return (
     <div className="space-y-5">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <FlashcardSession initialCards={cards} learningDirection={settings.learningDirection} />
-      <ListeningExercise cards={cards} />
+      <ReviewWorkspace cards={cards} learningDirection={settings.learningDirection} />
     </div>
   );
 }

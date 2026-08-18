@@ -98,6 +98,7 @@
     "subtitle": "Language, theme, and study preferences.",
     "language": "Language",
     "theme": "Theme",
+    "learningDirection": "Learning direction",
     "dailyGoal": "Daily goal",
     "ai": "Optional AI",
     "aiDescription": "Provider-independent hooks are configured, but core study flows work offline from AI."

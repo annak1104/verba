@@ -56,45 +56,47 @@ export class ReviewRepository {
       throw new Error("Review state not found.");
     }
 
-    const [updated] = await db
-      .update(reviewState)
-      .set({
-        status: input.nextStatus,
-        nextReviewAt: input.nextReviewAt,
-        interval: input.nextInterval,
-        ease: input.nextEase,
-        correctCount: current.correctCount + (input.wasCorrect ? 1 : 0),
-        incorrectCount: current.incorrectCount + (input.wasCorrect ? 0 : 1),
-        updatedAt: new Date()
-      })
-      .where(and(eq(reviewState.ownerId, input.ownerId), eq(reviewState.cardId, input.cardId)))
-      .returning();
+    return db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(reviewState)
+        .set({
+          status: input.nextStatus,
+          nextReviewAt: input.nextReviewAt,
+          interval: input.nextInterval,
+          ease: input.nextEase,
+          correctCount: current.correctCount + (input.wasCorrect ? 1 : 0),
+          incorrectCount: current.incorrectCount + (input.wasCorrect ? 0 : 1),
+          updatedAt: new Date()
+        })
+        .where(and(eq(reviewState.ownerId, input.ownerId), eq(reviewState.cardId, input.cardId)))
+        .returning();
 
-    await db
-      .update(cards)
-      .set({
-        difficulty: Math.round(input.nextDifficulty),
-        updatedAt: new Date()
-      })
-      .where(and(eq(cards.ownerId, input.ownerId), eq(cards.id, input.cardId)));
+      if (!updated) {
+        throw new Error("Failed to update review state.");
+      }
 
-    await db.insert(reviewHistory).values({
-      ownerId: input.ownerId,
-      cardId: input.cardId,
-      rating: input.rating,
-      previousStatus: current.status,
-      nextStatus: input.nextStatus,
-      previousInterval: current.interval,
-      nextInterval: input.nextInterval,
-      previousEase: current.ease,
-      nextEase: input.nextEase
+      await tx
+        .update(cards)
+        .set({
+          difficulty: Math.round(input.nextDifficulty),
+          updatedAt: new Date()
+        })
+        .where(and(eq(cards.ownerId, input.ownerId), eq(cards.id, input.cardId)));
+
+      await tx.insert(reviewHistory).values({
+        ownerId: input.ownerId,
+        cardId: input.cardId,
+        rating: input.rating,
+        previousStatus: current.status,
+        nextStatus: input.nextStatus,
+        previousInterval: current.interval,
+        nextInterval: input.nextInterval,
+        previousEase: current.ease,
+        nextEase: input.nextEase
+      });
+
+      return toState(updated, input.nextDifficulty);
     });
-
-    if (!updated) {
-      throw new Error("Failed to update review state.");
-    }
-
-    return toState(updated, input.nextDifficulty);
   }
 }
 
