@@ -25,8 +25,8 @@ export default async function WordsPage({searchParams}: WordsPageProps) {
 function toFilters(params: Record<string, string | string[] | undefined>): CardFilters {
   const filters: CardFilters = {};
   const search = first(params.search);
-  const deckId = first(params.deckId);
-  const tag = first(params.tag);
+  const deckId = normalizeAll(first(params.deckId));
+  const tag = normalizeAll(first(params.tag));
   const status = first(params.status) as CardFilters["status"];
   const favorite = first(params.favorite) as CardFilters["favorite"];
   const sort = first(params.sort) as CardFilters["sort"];
@@ -43,4 +43,8 @@ function toFilters(params: Record<string, string | string[] | undefined>): CardF
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizeAll(value: string | undefined) {
+  return value === "all" ? undefined : value;
 }

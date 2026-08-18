@@ -1,12 +1,19 @@
 "use client";
 
 import {zodResolver} from "@hookform/resolvers/zod";
-import {useForm} from "react-hook-form";
+import {Controller, useForm} from "react-hook-form";
 import {useTransition} from "react";
 import {Save} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {
   cardFormSchema,
   type CardFormInput,
@@ -29,6 +36,7 @@ export function WordForm({
   const [pending, startTransition] = useTransition();
   const {
     register,
+    control,
     handleSubmit,
     formState: {errors},
     reset
@@ -103,16 +111,24 @@ export function WordForm({
 
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_8rem]">
         <Field label="Deck" error={errors.deckId?.message}>
-          <select
-            className="glass-control h-12 w-full rounded-2xl px-4 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
-            {...register("deckId")}
-          >
-            {decks.map((deck) => (
-              <option key={deck.id} value={deck.id}>
-                {deck.name}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="deckId"
+            render={({field}) => (
+              <Select disabled={decks.length === 0} value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose deck" />
+                </SelectTrigger>
+                <SelectContent>
+                  {decks.map((deck) => (
+                    <SelectItem key={deck.id} value={deck.id}>
+                      {deck.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </Field>
         <Field label="Tags" error={errors.tags?.message}>
           <Input {...register("tags")} placeholder="travel, work" />

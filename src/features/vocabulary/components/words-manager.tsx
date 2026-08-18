@@ -6,6 +6,13 @@ import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {GlassCard} from "@/components/ui/glass-card";
 import {EmptyState} from "@/components/ui/state-view";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {SpeakerButton} from "@/features/pronunciation/components/speaker-button";
 import {WordForm} from "@/features/vocabulary/components/word-form";
 import {
@@ -70,35 +77,35 @@ function WordsFilters({
             placeholder="Search words"
           />
         </label>
-        <Select defaultValue={filters.deckId ?? ""} name="deckId">
-          <option value="">All decks</option>
+        <FilterSelect defaultValue={filters.deckId ?? "all"} name="deckId" placeholder="All decks">
+          <SelectItem value="all">All decks</SelectItem>
           {decks.map((deck) => (
-            <option key={deck.id} value={deck.id}>
+            <SelectItem key={deck.id} value={deck.id}>
               {deck.name}
-            </option>
+            </SelectItem>
           ))}
-        </Select>
-        <Select defaultValue={filters.status ?? "all"} name="status">
-          <option value="all">All states</option>
-          <option value="new">New</option>
-          <option value="learning">Learning</option>
-          <option value="reviewing">Reviewing</option>
-          <option value="mastered">Mastered</option>
-        </Select>
-        <Select defaultValue={filters.tag ?? ""} name="tag">
-          <option value="">All tags</option>
+        </FilterSelect>
+        <FilterSelect defaultValue={filters.status ?? "all"} name="status" placeholder="All states">
+          <SelectItem value="all">All states</SelectItem>
+          <SelectItem value="new">New</SelectItem>
+          <SelectItem value="learning">Learning</SelectItem>
+          <SelectItem value="reviewing">Reviewing</SelectItem>
+          <SelectItem value="mastered">Mastered</SelectItem>
+        </FilterSelect>
+        <FilterSelect defaultValue={filters.tag ?? "all"} name="tag" placeholder="All tags">
+          <SelectItem value="all">All tags</SelectItem>
           {tags.map((tag) => (
-            <option key={tag.id} value={tag.name}>
+            <SelectItem key={tag.id} value={tag.name}>
               {tag.name}
-            </option>
+            </SelectItem>
           ))}
-        </Select>
-        <Select defaultValue={filters.sort ?? "english"} name="sort">
-          <option value="english">A-Z</option>
-          <option value="created">Newest</option>
-          <option value="due">Due</option>
-          <option value="difficulty">Hardest</option>
-        </Select>
+        </FilterSelect>
+        <FilterSelect defaultValue={filters.sort ?? "english"} name="sort" placeholder="Sort">
+          <SelectItem value="english">A-Z</SelectItem>
+          <SelectItem value="created">Newest</SelectItem>
+          <SelectItem value="due">Due</SelectItem>
+          <SelectItem value="difficulty">Hardest</SelectItem>
+        </FilterSelect>
         <label className="glass-control flex h-12 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold">
           <input
             defaultChecked={filters.favorite === "true"}
@@ -204,11 +211,18 @@ function WordRow({word, decks}: Readonly<{word: Word; decks: Deck[]}>) {
   );
 }
 
-function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+function FilterSelect({
+  children,
+  defaultValue,
+  name,
+  placeholder
+}: Readonly<{children: React.ReactNode; defaultValue: string; name: string; placeholder: string}>) {
   return (
-    <select
-      className="glass-control h-12 rounded-2xl px-3 text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      {...props}
-    />
+    <Select defaultValue={defaultValue} name={name}>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>{children}</SelectContent>
+    </Select>
   );
 }

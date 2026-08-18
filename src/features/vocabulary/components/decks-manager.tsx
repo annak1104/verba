@@ -1,6 +1,6 @@
 "use client";
 
-import {useForm} from "react-hook-form";
+import {Controller, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useTransition} from "react";
 import {ArrowDown, ArrowUp, Save, Trash2} from "lucide-react";
@@ -8,6 +8,13 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Progress} from "@/components/ui/progress";
 import {GlassCard} from "@/components/ui/glass-card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {
   deckFormSchema,
   type DeckFormInput,
@@ -110,7 +117,7 @@ function DeckForm({
   onSubmit: (values: DeckFormValues) => Promise<{ok: boolean; message: string}>;
 }>) {
   const [pending, startTransition] = useTransition();
-  const {register, handleSubmit} = useForm<DeckFormInput, unknown, DeckFormValues>({
+  const {control, register, handleSubmit} = useForm<DeckFormInput, unknown, DeckFormValues>({
     resolver: zodResolver(deckFormSchema),
     defaultValues: {
       name: deck?.name ?? "",
@@ -126,15 +133,23 @@ function DeckForm({
     >
       <Input {...register("name")} placeholder="Deck name" />
       <Input {...register("description")} placeholder="Description" />
-      <select
-        className="glass-control h-12 w-full rounded-2xl px-4 text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        {...register("color")}
-      >
-        <option value="emerald">Emerald</option>
-        <option value="cyan">Cyan</option>
-        <option value="amber">Amber</option>
-        <option value="rose">Rose</option>
-      </select>
+      <Controller
+        control={control}
+        name="color"
+        render={({field}) => (
+          <Select value={field.value ?? "emerald"} onValueChange={field.onChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Deck color" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="emerald">Emerald</SelectItem>
+              <SelectItem value="cyan">Cyan</SelectItem>
+              <SelectItem value="amber">Amber</SelectItem>
+              <SelectItem value="rose">Rose</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      />
       <Button disabled={pending} type="submit" className="w-full">
         <Save className="size-4" />
         {pending ? "Saving..." : submitLabel}
