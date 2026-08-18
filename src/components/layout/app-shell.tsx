@@ -1,9 +1,10 @@
 import {UserButton} from "@clerk/nextjs";
 import {auth} from "@clerk/nextjs/server";
 import type {Route} from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {getTranslations} from "next-intl/server";
-import {BookMarked, Languages} from "lucide-react";
+import {BookMarked} from "lucide-react";
 import {BottomNav, DesktopNav} from "@/components/layout/bottom-nav";
 import {Button} from "@/components/ui/button";
 import {ThemeToggle} from "@/features/settings/components/theme-toggle";
@@ -20,13 +21,18 @@ export async function AppShell({children}: Readonly<{children: React.ReactNode}>
       <header className="safe-px sticky top-0 z-30 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="glass-surface mx-auto flex h-16 w-full max-w-6xl items-center justify-between rounded-[28px] px-3 sm:px-4">
           <Link href={todayRoute} className="flex min-w-0 items-center gap-2" aria-label={t("name")}>
-            <span className="grid size-10 shrink-0 place-items-center rounded-[18px] bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <Languages className="size-5" />
+            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-background/60 shadow-sm ring-1 ring-border">
+              <Image
+                alt=""
+                aria-hidden
+                className="size-full object-contain"
+                height={40}
+                priority
+                src="/brand/verba-logo.png"
+                width={40}
+              />
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[15px] font-bold leading-5">{t("name")}</span>
-              <span className="block truncate text-xs text-muted-foreground">{t("tagline")}</span>
-            </span>
+            <span className="block min-w-0 truncate text-[17px] font-bold leading-5">{t("name")}</span>
           </Link>
           <div className="flex items-center gap-1">
             <ThemeToggle />
