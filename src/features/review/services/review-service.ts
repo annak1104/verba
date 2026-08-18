@@ -21,9 +21,13 @@ export async function applyCardReview(cardId: string, rating: ReviewRating) {
 
   const next = scheduleNextReview({
     rating,
+    state: current.status,
     easeFactor: current.ease,
     intervalDays: current.interval,
     repetitions: current.correctCount + current.incorrectCount,
+    correctCount: current.correctCount,
+    incorrectCount: current.incorrectCount,
+    difficulty: current.difficulty,
     reviewedAt: new Date()
   });
 
@@ -32,9 +36,10 @@ export async function applyCardReview(cardId: string, rating: ReviewRating) {
     cardId,
     rating,
     nextStatus: next.memoryState,
-    nextReviewAt: new Date(`${next.dueOn}T09:00:00.000Z`),
+    nextReviewAt: next.nextReviewAt,
     nextInterval: next.intervalDays,
     nextEase: next.easeFactor,
+    nextDifficulty: next.difficulty,
     wasCorrect: rating !== "again"
   });
 }

@@ -1,6 +1,6 @@
 import {and, desc, eq} from "drizzle-orm";
 import {db} from "@/db/client";
-import {reviewHistory, reviewState} from "@/db/schema";
+import {cards, reviewHistory, reviewState} from "@/db/schema";
 import type {MemoryState, ReviewRating} from "@/features/vocabulary/types";
 
 export type ReviewStateRecord = {
@@ -12,6 +12,7 @@ export type ReviewStateRecord = {
   ease: number;
   correctCount: number;
   incorrectCount: number;
+  difficulty: number;
 };
 
 export type ApplyReviewInput = {
@@ -22,16 +23,23 @@ export type ApplyReviewInput = {
   nextReviewAt: Date;
   nextInterval: number;
   nextEase: number;
+  nextDifficulty: number;
   wasCorrect: boolean;
 };
 
 export class ReviewRepository {
   async getState(ownerId: string, cardId: string): Promise<ReviewStateRecord | null> {
-    const row = await db.query.reviewState.findFirst({
-      where: and(eq(reviewState.ownerId, ownerId), eq(reviewState.cardId, cardId))
-    });
+    const [row] = await db
+      .select({
+        state: reviewState,
+        difficulty: cards.difficulty
+      })
+      .from(reviewState)
+      .innerJoin(cards, and(eq(reviewState.cardId, cards.id), eq(reviewState.ownerId, cards.ownerId)))
+      .where(and(eq(reviewState.ownerId, ownerId), eq(reviewState.cardId, cardId)))
+      .limit(1);
 
-    return row ? toState(row) : null;
+    return row ? toState(row.state, row.difficulty) : null;
   }
 
   async listHistory(ownerId: string, cardId: string) {
@@ -62,6 +70,14 @@ export class ReviewRepository {
       .where(and(eq(reviewState.ownerId, input.ownerId), eq(reviewState.cardId, input.cardId)))
       .returning();
 
+    await db
+      .update(cards)
+      .set({
+        difficulty: Math.round(input.nextDifficulty),
+        updatedAt: new Date()
+      })
+      .where(and(eq(cards.ownerId, input.ownerId), eq(cards.id, input.cardId)));
+
     await db.insert(reviewHistory).values({
       ownerId: input.ownerId,
       cardId: input.cardId,
@@ -78,11 +94,11 @@ export class ReviewRepository {
       throw new Error("Failed to update review state.");
     }
 
-    return toState(updated);
+    return toState(updated, input.nextDifficulty);
   }
 }
 
-function toState(row: typeof reviewState.$inferSelect): ReviewStateRecord {
+function toState(row: typeof reviewState.$inferSelect, difficulty: number): ReviewStateRecord {
   return {
     cardId: row.cardId,
     ownerId: row.ownerId,
@@ -91,6 +107,7 @@ function toState(row: typeof reviewState.$inferSelect): ReviewStateRecord {
     interval: row.interval,
     ease: row.ease,
     correctCount: row.correctCount,
-    incorrectCount: row.incorrectCount
+    incorrectCount: row.incorrectCount,
+    difficulty
   };
 }

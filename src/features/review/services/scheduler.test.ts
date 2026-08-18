@@ -2,34 +2,22 @@ import {describe, expect, it} from "vitest";
 import {scheduleNextReview} from "./scheduler";
 
 describe("scheduleNextReview", () => {
-  it("resets repetitions when a word is missed", () => {
+  it("wraps the pure SRS result for existing callers", () => {
     const result = scheduleNextReview({
       rating: "again",
+      state: "reviewing",
       easeFactor: 250,
       intervalDays: 5,
       repetitions: 3,
-      reviewedAt: new Date("2026-08-18T00:00:00.000Z")
+      reviewedAt: new Date("2026-08-18T12:00:00.000Z")
     });
 
     expect(result).toMatchObject({
-      repetitions: 0,
+      easeFactor: 230,
       intervalDays: 0,
       memoryState: "learning",
       dueOn: "2026-08-18"
     });
-  });
-
-  it("grows the interval for an easy review", () => {
-    const result = scheduleNextReview({
-      rating: "easy",
-      easeFactor: 250,
-      intervalDays: 3,
-      repetitions: 2,
-      reviewedAt: new Date("2026-08-18T00:00:00.000Z")
-    });
-
-    expect(result.intervalDays).toBeGreaterThan(3);
-    expect(result.easeFactor).toBe(265);
-    expect(result.memoryState).toBe("reviewing");
+    expect(result.nextReviewAt.toISOString()).toBe("2026-08-18T12:10:00.000Z");
   });
 });

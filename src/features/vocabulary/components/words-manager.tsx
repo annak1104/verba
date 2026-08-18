@@ -6,6 +6,7 @@ import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {GlassCard} from "@/components/ui/glass-card";
 import {EmptyState} from "@/components/ui/state-view";
+import {SpeakerButton} from "@/features/pronunciation/components/speaker-button";
 import {WordForm} from "@/features/vocabulary/components/word-form";
 import {
   createCardAction,
@@ -124,12 +125,32 @@ function WordRow({word, decks}: Readonly<{word: Word; decks: Deck[]}>) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="truncate text-xl font-bold">{word.term}</h2>
+            <SpeakerButton
+              aria-label={`Speak ${word.term}`}
+              className="size-9 rounded-xl"
+              text={word.term}
+            />
             {word.favorite ? <Heart className="size-4 fill-primary text-primary" /> : null}
           </div>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{word.meaning}</p>
           <p className="mt-1 text-xs text-muted-foreground">{word.pronunciation}</p>
         </div>
         <Badge>{word.deckName}</Badge>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="glass-control flex items-center justify-between gap-3 rounded-[22px] p-4">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-normal text-muted-foreground">English audio</p>
+            <p className="truncate text-sm font-semibold">{word.term}</p>
+          </div>
+          <SpeakerButton aria-label={`Speak ${word.term}`} text={word.term} />
+        </div>
+        <div className="glass-control rounded-[22px] p-4">
+          <p className="text-xs font-bold uppercase tracking-normal text-muted-foreground">Pronunciation</p>
+          <p className="mt-1 text-sm font-semibold">{word.pronunciation || "Not set"}</p>
+          {word.ipa ? <p className="mt-1 text-xs text-muted-foreground">IPA: {word.ipa}</p> : null}
+        </div>
       </div>
 
       {word.example ? <p className="glass-control rounded-[22px] p-4 text-sm">{word.example}</p> : null}
