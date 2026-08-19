@@ -1,10 +1,11 @@
 import type {MetadataRoute} from "next";
+import ukMessages from "../../messages/uk.json";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Verba",
     short_name: "Verba",
-    description: "A mobile-first English vocabulary learning app.",
+    description: ukMessages.App.description,
     start_url: "/today",
     display: "standalone",
     background_color: "#f9f7f0",

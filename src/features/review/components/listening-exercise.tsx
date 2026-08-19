@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useState} from "react";
+import {useTranslations} from "next-intl";
 import {ArrowLeft, ArrowRight, Ear, Eye} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -23,6 +24,10 @@ import {
 import type {Word} from "@/features/vocabulary/types";
 
 export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
+  const t = useTranslations("Listening");
+  const tReview = useTranslations("Review");
+  const tCommon = useTranslations("Common");
+  const tPronunciation = useTranslations("Pronunciation");
   const [state, setState] = useState(() => createListeningState(cards));
   const {rate, setRate} = useSpeechRate();
   const {stop} = useTextToSpeech();
@@ -53,7 +58,7 @@ export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
             <Ear className="size-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">Listening practice</h2>
+            <h2 className="text-lg font-bold">{t("title")}</h2>
             <p className="text-sm font-semibold text-muted-foreground">{current.deckName}</p>
           </div>
         </div>
@@ -67,6 +72,7 @@ export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
       <div className="glass-control rounded-[28px] p-5 text-center">
         <SpeakerButton
           className="mx-auto h-14 rounded-[22px] px-6"
+          label={tPronunciation("speakEnglish")}
           rate={rate}
           showLabel
           size="default"
@@ -80,28 +86,28 @@ export function ListeningExercise({cards}: Readonly<{cards: Word[]}>) {
                 <h3 className="text-3xl font-bold leading-tight">{content.english}</h3>
                 <p className="mt-1 text-base font-semibold text-muted-foreground">{content.ukrainian}</p>
               </div>
-              <AnswerLine label="Ukrainian pronunciation" value={content.ukrainianPronunciation} />
-              <AnswerLine label="IPA" value={content.ipa} />
-              <AnswerLine label="English example" value={content.exampleEnglish} />
-              <AnswerLine label="Ukrainian example" value={content.exampleUkrainian} muted />
+              <AnswerLine label={tReview("ukrainianPronunciation")} value={content.ukrainianPronunciation} />
+              <AnswerLine label={tReview("ipa")} value={content.ipa} />
+              <AnswerLine label={tReview("englishExample")} value={content.exampleEnglish} />
+              <AnswerLine label={tReview("ukrainianExample")} value={content.exampleUkrainian} muted />
             </div>
           ) : (
             <div className="flex min-h-44 items-center justify-center rounded-[24px] border border-dashed border-border/70 text-sm font-bold text-muted-foreground">
-              Hidden word
+              {t("hiddenWord")}
             </div>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-[3rem_minmax(0,1fr)_3rem] gap-2">
-        <Button aria-label="Previous listening card" size="icon" type="button" variant="glass" onClick={previousCard}>
+        <Button aria-label={t("previousCard")} size="icon" type="button" variant="glass" onClick={previousCard}>
           <ArrowLeft className="size-4" />
         </Button>
         <Button type="button" variant="glass" onClick={() => setState((value) => revealListeningAnswer(value))}>
           <Eye className="size-4" />
-          Reveal
+          {tCommon("reveal")}
         </Button>
-        <Button aria-label="Next listening card" size="icon" type="button" variant="glass" onClick={nextCard}>
+        <Button aria-label={t("nextCard")} size="icon" type="button" variant="glass" onClick={nextCard}>
           <ArrowRight className="size-4" />
         </Button>
       </div>

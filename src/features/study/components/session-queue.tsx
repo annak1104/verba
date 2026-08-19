@@ -2,16 +2,19 @@ import {Badge} from "@/components/ui/badge";
 import {GlassCard} from "@/components/ui/glass-card";
 import {EmptyState} from "@/components/ui/state-view";
 import type {StudyQueueItem} from "@/features/vocabulary/types";
+import {getTranslations} from "next-intl/server";
 
-export function SessionQueue({items}: Readonly<{items: StudyQueueItem[]}>) {
+export async function SessionQueue({items}: Readonly<{items: StudyQueueItem[]}>) {
+  const t = await getTranslations("Queue");
+
   if (items.length === 0) {
-    return <EmptyState title="Queue clear" description="No words are due right now." />;
+    return <EmptyState title={t("clearTitle")} description={t("clearDescription")} />;
   }
 
   return (
     <GlassCard className="p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">Queue</h2>
+        <h2 className="text-lg font-bold">{t("title")}</h2>
         <Badge variant="outline">{items.length}</Badge>
       </div>
       <div className="space-y-3">

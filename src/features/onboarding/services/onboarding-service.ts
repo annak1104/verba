@@ -2,6 +2,7 @@ import {redirect} from "next/navigation";
 import type {Route} from "next";
 import {requireAuthUserId, syncInternalUser} from "@/features/auth/services/auth-service";
 import {resolveDailyGoal, type OnboardingInput} from "@/features/onboarding/schema";
+import {ensureDefaultDeckForUser} from "@/features/vocabulary/services/vocabulary-service";
 
 const onboardingRoute = "/onboarding" as Route;
 const todayRoute = "/today" as Route;
@@ -23,10 +24,7 @@ export async function requireCompletedOnboarding() {
     redirect(onboardingRoute);
   }
 
-  const {DrizzleVocabularyRepository} = await import(
-    "@/features/vocabulary/repositories/vocabulary-repository"
-  );
-  await new DrizzleVocabularyRepository().ensureDefaultDeck(settings.userId);
+  await ensureDefaultDeckForUser(settings.userId);
 
   return settings;
 }
@@ -54,8 +52,5 @@ export async function completeOnboarding(input: OnboardingInput) {
     pronunciationPreference: input.pronunciationPreference
   });
 
-  const {DrizzleVocabularyRepository} = await import(
-    "@/features/vocabulary/repositories/vocabulary-repository"
-  );
-  await new DrizzleVocabularyRepository().ensureDefaultDeck(userId);
+  await ensureDefaultDeckForUser(userId);
 }

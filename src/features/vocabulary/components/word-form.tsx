@@ -3,6 +3,7 @@
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Controller, useForm} from "react-hook-form";
 import {useTransition} from "react";
+import {useTranslations} from "next-intl";
 import {Save} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -33,6 +34,8 @@ export function WordForm({
   submitLabel: string;
   onSubmit: (values: CardFormValues) => Promise<VocabularyActionState>;
 }>) {
+  const t = useTranslations("WordForm");
+  const tCommon = useTranslations("Common");
   const [pending, startTransition] = useTransition();
   const {
     register,
@@ -82,42 +85,42 @@ export function WordForm({
       })}
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="English" error={errors.english?.message}>
+        <Field label={t("english")} error={errors.english ? t("validation") : undefined}>
           <Input {...register("english")} autoComplete="off" />
         </Field>
-        <Field label="Ukrainian translation" error={errors.ukrainianTranslation?.message}>
+        <Field label={t("ukrainianTranslation")} error={errors.ukrainianTranslation ? t("validation") : undefined}>
           <Input {...register("ukrainianTranslation")} autoComplete="off" />
         </Field>
-        <Field label="Ukrainian phonetic pronunciation" error={errors.ukrainianPronunciation?.message}>
+        <Field label={t("ukrainianPronunciation")} error={errors.ukrainianPronunciation ? t("validation") : undefined}>
           <Input {...register("ukrainianPronunciation")} autoComplete="off" />
         </Field>
-        <Field label="IPA" error={errors.ipa?.message}>
+        <Field label={t("ipa")} error={errors.ipa ? t("validation") : undefined}>
           <Input {...register("ipa")} autoComplete="off" placeholder="/wɜːd/" />
         </Field>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="English example" error={errors.exampleEnglish?.message}>
+        <Field label={t("englishExample")} error={errors.exampleEnglish ? t("validation") : undefined}>
           <Textarea {...register("exampleEnglish")} />
         </Field>
-        <Field label="Ukrainian example" error={errors.exampleUkrainian?.message}>
+        <Field label={t("ukrainianExample")} error={errors.exampleUkrainian ? t("validation") : undefined}>
           <Textarea {...register("exampleUkrainian")} />
         </Field>
       </div>
 
-      <Field label="Notes" error={errors.notes?.message}>
+      <Field label={t("notes")} error={errors.notes ? t("validation") : undefined}>
         <Textarea {...register("notes")} />
       </Field>
 
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_8rem]">
-        <Field label="Deck" error={errors.deckId?.message}>
+        <Field label={t("deck")} error={errors.deckId ? t("validation") : undefined}>
           <Controller
             control={control}
             name="deckId"
             render={({field}) => (
               <Select disabled={decks.length === 0} value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose deck" />
+                  <SelectValue placeholder={t("chooseDeck")} />
                 </SelectTrigger>
                 <SelectContent>
                   {decks.map((deck) => (
@@ -130,22 +133,22 @@ export function WordForm({
             )}
           />
         </Field>
-        <Field label="Tags" error={errors.tags?.message}>
-          <Input {...register("tags")} placeholder="travel, work" />
+        <Field label={t("tags")} error={errors.tags ? t("validation") : undefined}>
+          <Input {...register("tags")} placeholder={t("tagsPlaceholder")} />
         </Field>
-        <Field label="Difficulty" error={errors.difficulty?.message}>
+        <Field label={t("difficulty")} error={errors.difficulty ? t("validation") : undefined}>
           <Input {...register("difficulty", {valueAsNumber: true})} min={1} max={5} type="number" />
         </Field>
       </div>
 
       <label className="glass-control flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-bold">
         <input className="size-4 accent-primary" type="checkbox" {...register("favorite")} />
-        Favorite
+        {t("favorite")}
       </label>
 
       <Button className="w-full" disabled={pending || decks.length === 0} type="submit">
         <Save className="size-4" />
-        {pending ? "Saving..." : submitLabel}
+        {pending ? tCommon("saving") : submitLabel}
       </Button>
     </form>
   );

@@ -7,6 +7,7 @@ import {getTranslations} from "next-intl/server";
 import {BookMarked} from "lucide-react";
 import {BottomNav, DesktopNav} from "@/components/layout/bottom-nav";
 import {Button} from "@/components/ui/button";
+import {LocaleSwitcher} from "@/features/settings/components/locale-switcher";
 import {ThemeToggle} from "@/features/settings/components/theme-toggle";
 
 const todayRoute = "/today" as Route;
@@ -35,6 +36,7 @@ export async function AppShell({children}: Readonly<{children: React.ReactNode}>
             <span className="block min-w-0 truncate text-[17px] font-bold leading-5">{t("name")}</span>
           </Link>
           <div className="flex items-center gap-1">
+            <LocaleSwitcher className="hidden sm:inline-grid" />
             <ThemeToggle />
             {userId ? (
               <UserButton />

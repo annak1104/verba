@@ -6,6 +6,28 @@
     "review": "Review",
     "learn": "Learn",
     "settings": "Settings",
+    "empty": "Nothing here yet",
+    "description": "A mobile-first English vocabulary learning app.",
+    "logoAlt": "Verba logo"
+  },
+  "Common": {
+    "save": "Save",
+    "saving": "Saving...",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "favorite": "Favorite",
+    "applyFilters": "Apply filters",
+    "all": "All",
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next",
+    "reveal": "Reveal",
+    "words": "words",
+    "due": "due",
+    "notSet": "Not set",
+    "loading": "Loading...",
+    "error": "Something went wrong",
     "empty": "Nothing here yet"
   },
   "Nav": {
@@ -16,6 +38,13 @@
     "decks": "Decks",
     "stats": "Stats",
     "settings": "Settings"
+  },
+  "Locale": {
+    "label": "Language",
+    "english": "English",
+    "ukrainian": "Українська",
+    "enShort": "EN",
+    "ukShort": "UK"
   },
   "Today": {
     "title": "Today",
@@ -42,11 +71,11 @@
   "Learn": {
     "title": "Learn",
     "subtitle": "Add a word with context, pronunciation notes, and a deck.",
-    "word": "Word",
-    "meaning": "Meaning",
-    "example": "Example sentence",
-    "deck": "Deck",
-    "save": "Save word"
+    "modes": {
+      "add": "Add Word",
+      "review": "Flashcards",
+      "listening": "Listening"
+    }
   },
   "Review": {
     "title": "Review",
@@ -54,16 +83,107 @@
     "again": "Again",
     "hard": "Hard",
     "good": "Good",
-    "easy": "Easy"
+    "easy": "Easy",
+    "completeTitle": "Review complete",
+    "completeSummary": "{correct} correct · {incorrect} missed · {accuracy}% accuracy",
+    "cards": "Cards",
+    "newCards": "New",
+    "noCardsTitle": "No review cards",
+    "noCardsDescription": "No words are eligible for review right now.",
+    "previousCard": "Previous card",
+    "nextCard": "Next card",
+    "flashcard": "Flashcard",
+    "tapHint": "Tap to flip · swipe to move",
+    "correctAnswer": "Correct answer",
+    "english": "English",
+    "ukrainian": "Ukrainian",
+    "ukrainianPronunciation": "Ukrainian pronunciation",
+    "ipa": "IPA",
+    "englishExample": "English example",
+    "ukrainianExample": "Ukrainian example",
+    "directionEnUk": "EN to UK",
+    "directionUkEn": "UK to EN"
+  },
+  "Listening": {
+    "title": "Listening practice",
+    "hiddenWord": "Hidden word",
+    "previousCard": "Previous listening card",
+    "nextCard": "Next listening card"
   },
   "Words": {
     "title": "Words",
-    "subtitle": "Your vocabulary library, grouped by deck and memory state."
+    "subtitle": "Your vocabulary library, grouped by deck and memory state.",
+    "createWord": "Create word",
+    "saveChanges": "Save changes",
+    "noMatchTitle": "No words match",
+    "noMatchDescription": "Try a different search or create a new word.",
+    "noWordsTitle": "No words yet",
+    "noWordsDescription": "Add your first word from Learn.",
+    "searchPlaceholder": "Search words",
+    "allDecks": "All decks",
+    "allStates": "All states",
+    "allTags": "All tags",
+    "sort": "Sort",
+    "sortAz": "A-Z",
+    "sortNewest": "Newest",
+    "sortDue": "Due",
+    "sortHardest": "Hardest",
+    "favorites": "Favorites",
+    "englishAudio": "English audio",
+    "pronunciation": "Pronunciation",
+    "ipa": "IPA",
+    "difficulty": "Difficulty {value}",
+    "dueOn": "Due {date}",
+    "memory": {
+      "new": "New",
+      "learning": "Learning",
+      "reviewing": "Reviewing",
+      "mastered": "Mastered"
+    }
+  },
+  "WordForm": {
+    "english": "English",
+    "ukrainianTranslation": "Ukrainian translation",
+    "ukrainianPronunciation": "Ukrainian phonetic pronunciation",
+    "ipa": "IPA",
+    "englishExample": "English example",
+    "ukrainianExample": "Ukrainian example",
+    "notes": "Notes",
+    "deck": "Deck",
+    "tags": "Tags",
+    "difficulty": "Difficulty",
+    "favorite": "Favorite",
+    "chooseDeck": "Choose deck",
+    "tagsPlaceholder": "travel, work",
+    "createSubmit": "Create word",
+    "saveSubmit": "Save word",
+    "saveChanges": "Save changes",
+    "validation": "Please check this field."
   },
   "Decks": {
     "title": "Decks",
     "subtitle": "Keep topics tidy and review them at the right rhythm.",
-    "words": "{count, plural, one {# word} other {# words}}"
+    "words": "{count, plural, one {# word} other {# words}}",
+    "createDeck": "Create deck",
+    "saveDeck": "Save deck",
+    "renameEdit": "Rename / edit",
+    "deckName": "Deck name",
+    "description": "Description",
+    "deckColor": "Deck color",
+    "total": "Total",
+    "due": "Due",
+    "learning": "Learning",
+    "mastered": "Mastered",
+    "colors": {
+      "emerald": "Emerald",
+      "cyan": "Cyan",
+      "amber": "Amber",
+      "rose": "Rose"
+    }
+  },
+  "DefaultDeck": {
+    "name": "Default",
+    "description": "Your first English vocabulary deck."
   },
   "Stats": {
     "title": "Stats",
@@ -102,5 +222,59 @@
     "dailyGoal": "Daily goal",
     "ai": "Optional AI",
     "aiDescription": "Provider-independent hooks are configured, but core study flows work offline from AI."
+  },
+  "Theme": {"toggle": "Toggle theme"},
+  "Pronunciation": {
+    "speakEnglish": "Speak English",
+    "speaking": "Speaking",
+    "speak": "Speak",
+    "speech": "Speech",
+    "speechRate": "Speech rate",
+    "unsupported": "Speech synthesis is not supported in this browser.",
+    "unavailable": "Speech synthesis is not available.",
+    "empty": "Nothing to pronounce.",
+    "error": "Speech playback failed.",
+    "stopped": "Playback stopped.",
+    "failed": "Speech playback failed."
+  },
+  "Onboarding": {
+    "title": "Set up your English path",
+    "subtitle": "A few choices tailor the daily queue. AI stays optional; the core study flow works without it.",
+    "englishLevel": "English level",
+    "dailyGoal": "Daily goal",
+    "customGoal": "Custom goal",
+    "learningDirection": "Learning direction",
+    "pronunciationPreference": "Pronunciation preference",
+    "continue": "Continue",
+    "error": "Please check your onboarding choices.",
+    "levels": {
+      "beginner": "Beginner",
+      "elementary": "Elementary",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "goals": {"custom": "Custom"},
+    "pronunciation": {
+      "ukrainian": "Ukrainian hints",
+      "ipa": "IPA",
+      "both": "Both"
+    },
+    "directions": {
+      "enUk": "EN to UK",
+      "ukEn": "UK to EN"
+    }
+  },
+  "Queue": {
+    "title": "Queue",
+    "clearTitle": "Queue clear",
+    "clearDescription": "No words are due right now."
+  },
+  "Actions": {
+    "wordInvalid": "Please check the word fields.",
+    "wordCreated": "Word created.",
+    "wordUpdated": "Word updated.",
+    "deckInvalid": "Please check the deck fields.",
+    "deckCreated": "Deck created.",
+    "deckUpdated": "Deck updated."
   }
 }

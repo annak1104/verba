@@ -1,6 +1,7 @@
 "use client";
 
 import {useActionState} from "react";
+import {useTranslations} from "next-intl";
 import {ArrowRight, BookOpenCheck, Goal, Languages, Volume2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {GlassCard} from "@/components/ui/glass-card";
@@ -8,33 +9,30 @@ import {Input} from "@/components/ui/input";
 import {submitOnboarding} from "@/features/onboarding/actions";
 import {cn} from "@/lib/utils";
 
-const levelOptions = [
-  {value: "beginner", label: "Beginner"},
-  {value: "elementary", label: "Elementary"},
-  {value: "intermediate", label: "Intermediate"},
-  {value: "advanced", label: "Advanced"}
-];
-
-const goalOptions = [
-  {value: "5", label: "5"},
-  {value: "10", label: "10"},
-  {value: "20", label: "20"},
-  {value: "custom", label: "Custom"}
-];
-
-const directionOptions = [
-  {value: "english_to_ukrainian", label: "EN -> UK"},
-  {value: "ukrainian_to_english", label: "UK -> EN"}
-];
-
-const pronunciationOptions = [
-  {value: "ukrainian", label: "Ukrainian hints"},
-  {value: "ipa", label: "IPA"},
-  {value: "both", label: "Both"}
-];
-
 export function OnboardingForm() {
+  const t = useTranslations("Onboarding");
   const [state, formAction, pending] = useActionState(submitOnboarding, {error: null});
+  const levelOptions = [
+    {value: "beginner", label: t("levels.beginner")},
+    {value: "elementary", label: t("levels.elementary")},
+    {value: "intermediate", label: t("levels.intermediate")},
+    {value: "advanced", label: t("levels.advanced")}
+  ];
+  const goalOptions = [
+    {value: "5", label: "5"},
+    {value: "10", label: "10"},
+    {value: "20", label: "20"},
+    {value: "custom", label: t("goals.custom")}
+  ];
+  const pronunciationOptions = [
+    {value: "ukrainian", label: t("pronunciation.ukrainian")},
+    {value: "ipa", label: t("pronunciation.ipa")},
+    {value: "both", label: t("pronunciation.both")}
+  ];
+  const directionOptions = [
+    {value: "english_to_ukrainian", label: t("directions.enUk")},
+    {value: "ukrainian_to_english", label: t("directions.ukEn")}
+  ];
 
   return (
     <GlassCard className="space-y-7 p-5 sm:p-7">
@@ -43,9 +41,9 @@ export function OnboardingForm() {
           <BookOpenCheck className="size-7" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">Set up your English path</h1>
+          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">{t("title")}</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            A few choices tailor the daily queue. AI stays optional; the core study flow works without it.
+            {t("subtitle")}
           </p>
         </div>
       </div>
@@ -53,7 +51,7 @@ export function OnboardingForm() {
       <form action={formAction} className="space-y-6">
         <ChoiceGroup
           icon={BookOpenCheck}
-          legend="English level"
+          legend={t("englishLevel")}
           name="englishLevel"
           options={levelOptions}
           defaultValue="beginner"
@@ -62,7 +60,7 @@ export function OnboardingForm() {
         <div className="space-y-3">
           <ChoiceGroup
             icon={Goal}
-            legend="Daily goal"
+            legend={t("dailyGoal")}
             name="dailyGoalPreset"
             options={goalOptions}
             defaultValue="10"
@@ -72,14 +70,14 @@ export function OnboardingForm() {
             min={1}
             max={200}
             name="customDailyGoal"
-            placeholder="Custom goal"
+            placeholder={t("customGoal")}
             type="number"
           />
         </div>
 
         <ChoiceGroup
           icon={Languages}
-          legend="Learning direction"
+          legend={t("learningDirection")}
           name="learningDirection"
           options={directionOptions}
           defaultValue="english_to_ukrainian"
@@ -87,7 +85,7 @@ export function OnboardingForm() {
 
         <ChoiceGroup
           icon={Volume2}
-          legend="Pronunciation preference"
+          legend={t("pronunciationPreference")}
           name="pronunciationPreference"
           options={pronunciationOptions}
           defaultValue="ukrainian"
@@ -95,12 +93,12 @@ export function OnboardingForm() {
 
         {state.error ? (
           <p className="rounded-2xl bg-destructive/12 p-3 text-sm font-medium text-destructive">
-            {state.error}
+            {t("error")}
           </p>
         ) : null}
 
         <Button className="h-13 w-full text-base" disabled={pending} type="submit">
-          Continue
+          {t("continue")}
           <ArrowRight className="size-4" />
         </Button>
       </form>

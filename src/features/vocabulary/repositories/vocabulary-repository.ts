@@ -1,4 +1,4 @@
-import {and, asc, desc, eq, lte, sql} from "drizzle-orm";
+import {and, asc, desc, eq, inArray, lte, sql} from "drizzle-orm";
 import {db} from "@/db/client";
 import {cardTags, cards, decks, reviewState, tags} from "@/db/schema";
 import type {
@@ -12,7 +12,7 @@ import type {
 } from "@/features/vocabulary/types";
 
 export type VocabularyRepository = {
-  ensureDefaultDeck(userId: string): Promise<Deck>;
+  ensureDefaultDeck(userId: string, input: DefaultDeckInput): Promise<Deck>;
   listDecks(userId: string): Promise<Deck[]>;
   listWords(userId: string, filters?: CardFilters): Promise<Word[]>;
   listDueWords(userId: string, isoDate: string): Promise<Word[]>;
@@ -27,6 +27,10 @@ export type VocabularyRepository = {
   toggleFavorite(userId: string, cardId: string): Promise<void>;
 };
 
+export type DefaultDeckInput = Pick<CreateDeckInput, "name" | "description" | "color"> & {
+  fallbackNames?: string[];
+};
+
 type CardRow = typeof cards.$inferSelect & {
   deck: {name: string};
   reviewState: typeof reviewState.$inferSelect | null;
@@ -34,9 +38,10 @@ type CardRow = typeof cards.$inferSelect & {
 };
 
 export class DrizzleVocabularyRepository implements VocabularyRepository {
-  async ensureDefaultDeck(userId: string): Promise<Deck> {
+  async ensureDefaultDeck(userId: string, input: DefaultDeckInput): Promise<Deck> {
+    const names = Array.from(new Set([input.name, ...(input.fallbackNames ?? [])]));
     const existing = await db.query.decks.findFirst({
-      where: and(eq(decks.ownerId, userId), eq(decks.name, "Default")),
+      where: and(eq(decks.ownerId, userId), inArray(decks.name, names)),
       with: {cards: {with: {reviewState: true}}}
     });
 
@@ -44,11 +49,13 @@ export class DrizzleVocabularyRepository implements VocabularyRepository {
       return toDeck(existing);
     }
 
-    return this.createDeck(userId, {
-      name: "Default",
-      description: "Your first English vocabulary deck.",
-      color: "emerald"
-    });
+    const deckInput: CreateDeckInput = {
+      name: input.name,
+      ...(input.description ? {description: input.description} : {}),
+      ...(input.color ? {color: input.color} : {})
+    };
+
+    return this.createDeck(userId, deckInput);
   }
 
   async listDecks(userId: string): Promise<Deck[]> {

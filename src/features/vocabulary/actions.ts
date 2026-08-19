@@ -1,6 +1,7 @@
 "use server";
 
 import {revalidatePath} from "next/cache";
+import {getTranslations} from "next-intl/server";
 import {
   createCard,
   createDeck,
@@ -22,28 +23,30 @@ export type VocabularyActionState = {
 };
 
 export async function createCardAction(values: unknown): Promise<VocabularyActionState> {
+  const t = await getTranslations("Actions");
   const parsed = cardFormSchema.safeParse(values);
   if (!parsed.success) {
-    return {ok: false, message: "Please check the word fields."};
+    return {ok: false, message: t("wordInvalid")};
   }
 
   await createCard(toCardInput(parsed.data));
   revalidateVocabulary();
-  return {ok: true, message: "Word created."};
+  return {ok: true, message: t("wordCreated")};
 }
 
 export async function updateCardAction(
   cardId: string,
   values: unknown
 ): Promise<VocabularyActionState> {
+  const t = await getTranslations("Actions");
   const parsed = cardFormSchema.safeParse(values);
   if (!parsed.success) {
-    return {ok: false, message: "Please check the word fields."};
+    return {ok: false, message: t("wordInvalid")};
   }
 
   await updateCard({id: cardId, ...toCardInput(parsed.data)});
   revalidateVocabulary();
-  return {ok: true, message: "Word updated."};
+  return {ok: true, message: t("wordUpdated")};
 }
 
 export async function deleteCardAction(cardId: string) {
@@ -57,28 +60,30 @@ export async function toggleFavoriteAction(cardId: string) {
 }
 
 export async function createDeckAction(values: unknown): Promise<VocabularyActionState> {
+  const t = await getTranslations("Actions");
   const parsed = deckFormSchema.safeParse(values);
   if (!parsed.success) {
-    return {ok: false, message: "Please check the deck fields."};
+    return {ok: false, message: t("deckInvalid")};
   }
 
   await createDeck(toDeckInput(parsed.data));
   revalidateVocabulary();
-  return {ok: true, message: "Deck created."};
+  return {ok: true, message: t("deckCreated")};
 }
 
 export async function updateDeckAction(
   deckId: string,
   values: unknown
 ): Promise<VocabularyActionState> {
+  const t = await getTranslations("Actions");
   const parsed = deckFormSchema.safeParse(values);
   if (!parsed.success) {
-    return {ok: false, message: "Please check the deck fields."};
+    return {ok: false, message: t("deckInvalid")};
   }
 
   await updateDeck({id: deckId, ...toDeckInput(parsed.data)});
   revalidateVocabulary();
-  return {ok: true, message: "Deck updated."};
+  return {ok: true, message: t("deckUpdated")};
 }
 
 export async function deleteDeckAction(deckId: string) {

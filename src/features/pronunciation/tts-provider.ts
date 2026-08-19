@@ -1,6 +1,8 @@
+export type SpeakFailureReason = "empty" | "unsupported" | "interrupted" | "error";
+
 export type SpeakResult =
   | {ok: true}
-  | {ok: false; reason: "empty" | "unsupported" | "interrupted" | "error"; message?: string};
+  | {ok: false; reason: SpeakFailureReason};
 
 export type SpeakRequest = {
   text: string;
@@ -56,12 +58,11 @@ class BrowserSpeechSynthesisProvider implements TextToSpeechProvider {
 
   async speak(request: SpeakRequest): Promise<SpeakResult> {
     const text = request.text.trim();
-    if (!text) return {ok: false, reason: "empty", message: "Nothing to pronounce."};
+    if (!text) return {ok: false, reason: "empty"};
     if (!this.isSupported()) {
       return {
         ok: false,
-        reason: "unsupported",
-        message: "Speech synthesis is not supported in this browser."
+        reason: "unsupported"
       };
     }
 
@@ -72,8 +73,7 @@ class BrowserSpeechSynthesisProvider implements TextToSpeechProvider {
     if (!synth) {
       return {
         ok: false,
-        reason: "unsupported",
-        message: "Speech synthesis is not available."
+        reason: "unsupported"
       };
     }
 
@@ -104,8 +104,7 @@ class BrowserSpeechSynthesisProvider implements TextToSpeechProvider {
         const interrupted = event.error === "interrupted" || event.error === "canceled";
         settle({
           ok: false,
-          reason: interrupted ? "interrupted" : "error",
-          message: interrupted ? "Playback stopped." : "Speech playback failed."
+          reason: interrupted ? "interrupted" : "error"
         });
       };
 

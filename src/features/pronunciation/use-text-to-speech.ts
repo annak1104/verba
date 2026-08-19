@@ -4,6 +4,7 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import {
   clampSpeechRate,
   getBrowserTextToSpeechProvider,
+  type SpeakFailureReason,
   type SpeakResult
 } from "@/features/pronunciation/tts-provider";
 
@@ -31,7 +32,7 @@ export function useTextToSpeech() {
   const requestIdRef = useRef(0);
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<SpeakFailureReason | null>(null);
 
   useEffect(() => {
     const provider = providerRef.current;
@@ -46,26 +47,21 @@ export function useTextToSpeech() {
     if (!provider.isSupported()) {
       const result: SpeakResult = {
         ok: false,
-        reason: "unsupported",
-        message: "Speech synthesis is not supported in this browser."
+        reason: "unsupported"
       };
       setSupported(false);
-      setMessage("Speech synthesis is not supported in this browser.");
+      setStatus("unsupported");
       return result;
     }
 
     setSupported(true);
     setSpeaking(true);
-    setMessage(null);
+    setStatus(null);
 
     const result = await provider.speak({text, rate, lang: "en-US"});
     if (requestIdRef.current === requestId) {
-      const nextMessage =
-        result.ok || result.reason === "interrupted"
-          ? null
-          : result.message ?? "Speech playback failed.";
       setSpeaking(false);
-      setMessage(nextMessage);
+      setStatus(result.ok || result.reason === "interrupted" ? null : result.reason);
     }
 
     return result;
@@ -77,5 +73,5 @@ export function useTextToSpeech() {
     setSpeaking(false);
   }, []);
 
-  return {message, speak, speaking, stop, supported};
+  return {speak, speaking, status, stop, supported};
 }

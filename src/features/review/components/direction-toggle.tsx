@@ -1,15 +1,21 @@
 "use client";
 
 import {useTransition} from "react";
+import {useTranslations} from "next-intl";
 import {ArrowRight} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {updateLearningDirectionAction} from "@/features/settings/actions";
 import type {LearningDirection} from "@/features/vocabulary/types";
 import {cn} from "@/lib/utils";
 
-const directions: Array<{value: LearningDirection; left: string; right: string; label: string}> = [
-  {value: "english_to_ukrainian", left: "EN", right: "UK", label: "EN to UK"},
-  {value: "ukrainian_to_english", left: "UK", right: "EN", label: "UK to EN"}
+const directions: Array<{
+  value: LearningDirection;
+  left: string;
+  right: string;
+  labelKey: "directionEnUk" | "directionUkEn";
+}> = [
+  {value: "english_to_ukrainian", left: "EN", right: "UK", labelKey: "directionEnUk"},
+  {value: "ukrainian_to_english", left: "UK", right: "EN", labelKey: "directionUkEn"}
 ];
 
 export function DirectionToggle({
@@ -21,6 +27,7 @@ export function DirectionToggle({
   onValueChange?: (value: LearningDirection) => void;
   className?: string;
 }>) {
+  const t = useTranslations("Review");
   const [pending, startTransition] = useTransition();
 
   return (
@@ -37,7 +44,7 @@ export function DirectionToggle({
               active ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"
             )}
             disabled={pending}
-            title={direction.label}
+            title={t(direction.labelKey)}
             type="button"
             variant={active ? "default" : "ghost"}
             onClick={() => {

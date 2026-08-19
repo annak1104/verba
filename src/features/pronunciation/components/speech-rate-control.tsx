@@ -1,5 +1,6 @@
 "use client";
 
+import {useTranslations} from "next-intl";
 import {cn} from "@/lib/utils";
 
 export function SpeechRateControl({
@@ -7,6 +8,8 @@ export function SpeechRateControl({
   onRateChange,
   className
 }: Readonly<{rate: number; onRateChange: (rate: number) => void; className?: string}>) {
+  const t = useTranslations("Pronunciation");
+
   return (
     <label
       className={cn(
@@ -14,9 +17,9 @@ export function SpeechRateControl({
         className
       )}
     >
-      <span className="shrink-0 text-muted-foreground">Speech</span>
+      <span className="shrink-0 text-muted-foreground">{t("speech")}</span>
       <input
-        aria-label="Speech rate"
+        aria-label={t("speechRate")}
         className="min-w-0 flex-1 accent-primary"
         max={1.35}
         min={0.6}

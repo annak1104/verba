@@ -1,4 +1,7 @@
 import {getVocabularyRepository} from "@/features/vocabulary/repositories";
+import {getTranslations} from "next-intl/server";
+import enMessages from "../../../../messages/en.json";
+import ukMessages from "../../../../messages/uk.json";
 import type {
   CardFilters,
   CreateCardInput,
@@ -14,7 +17,15 @@ export async function getDecks() {
 
 export async function ensureDefaultDeck() {
   const {repository, userId} = await getVocabularyRepository();
-  return repository.ensureDefaultDeck(userId);
+  return repository.ensureDefaultDeck(userId, await getLocalizedDefaultDeckInput());
+}
+
+export async function ensureDefaultDeckForUser(userId: string) {
+  const {DrizzleVocabularyRepository} = await import(
+    "@/features/vocabulary/repositories/vocabulary-repository"
+  );
+
+  return new DrizzleVocabularyRepository().ensureDefaultDeck(userId, await getLocalizedDefaultDeckInput());
 }
 
 export async function getDeckOptions() {
@@ -75,4 +86,15 @@ export async function toggleFavorite(cardId: string) {
 export async function getTags() {
   const {repository, userId} = await getVocabularyRepository();
   return repository.listTags(userId);
+}
+
+async function getLocalizedDefaultDeckInput() {
+  const t = await getTranslations("DefaultDeck");
+
+  return {
+    name: t("name"),
+    description: t("description"),
+    color: "emerald" as const,
+    fallbackNames: [enMessages.DefaultDeck.name, ukMessages.DefaultDeck.name]
+  };
 }

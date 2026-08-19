@@ -3,6 +3,7 @@
 import {Controller, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useTransition} from "react";
+import {useTranslations} from "next-intl";
 import {ArrowDown, ArrowUp, Save, Trash2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -29,13 +30,15 @@ import {
 import type {Deck} from "@/features/vocabulary/types";
 
 export function DecksManager({decks}: Readonly<{decks: Deck[]}>) {
+  const t = useTranslations("Decks");
+
   return (
     <div className="space-y-4">
       <GlassCard className="p-5">
         <details>
-          <summary className="cursor-pointer list-none text-lg font-bold">Create deck</summary>
+          <summary className="cursor-pointer list-none text-lg font-bold">{t("createDeck")}</summary>
           <div className="mt-5">
-            <DeckForm submitLabel="Create deck" onSubmit={createDeckAction} />
+            <DeckForm submitLabel={t("createDeck")} onSubmit={createDeckAction} />
           </div>
         </details>
       </GlassCard>
@@ -49,6 +52,8 @@ export function DecksManager({decks}: Readonly<{decks: Deck[]}>) {
 }
 
 function DeckCard({deck}: Readonly<{deck: Deck}>) {
+  const t = useTranslations("Decks");
+  const tCommon = useTranslations("Common");
   const [pending, startTransition] = useTransition();
 
   return (
@@ -62,10 +67,10 @@ function DeckCard({deck}: Readonly<{deck: Deck}>) {
       </div>
       <Progress value={deck.progress} />
       <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold text-muted-foreground">
-        <Stat label="Total" value={deck.wordCount} />
-        <Stat label="Due" value={deck.dueCount} />
-        <Stat label="Learning" value={deck.learningCount} />
-        <Stat label="Mastered" value={deck.masteredCount} />
+        <Stat label={t("total")} value={deck.wordCount} />
+        <Stat label={t("due")} value={deck.dueCount} />
+        <Stat label={t("learning")} value={deck.learningCount} />
+        <Stat label={t("mastered")} value={deck.masteredCount} />
       </div>
       <div className="grid grid-cols-4 gap-2">
         <Button
@@ -94,13 +99,13 @@ function DeckCard({deck}: Readonly<{deck: Deck}>) {
           onClick={() => startTransition(() => void deleteDeckAction(deck.id))}
         >
           <Trash2 className="size-4" />
-          Delete
+          {tCommon("delete")}
         </Button>
       </div>
       <details>
-        <summary className="cursor-pointer list-none text-sm font-bold text-primary">Rename / edit</summary>
+        <summary className="cursor-pointer list-none text-sm font-bold text-primary">{t("renameEdit")}</summary>
         <div className="mt-4">
-          <DeckForm deck={deck} submitLabel="Save deck" onSubmit={(values) => updateDeckAction(deck.id, values)} />
+          <DeckForm deck={deck} submitLabel={t("saveDeck")} onSubmit={(values) => updateDeckAction(deck.id, values)} />
         </div>
       </details>
     </GlassCard>
@@ -116,6 +121,8 @@ function DeckForm({
   submitLabel: string;
   onSubmit: (values: DeckFormValues) => Promise<{ok: boolean; message: string}>;
 }>) {
+  const t = useTranslations("Decks");
+  const tCommon = useTranslations("Common");
   const [pending, startTransition] = useTransition();
   const {control, register, handleSubmit} = useForm<DeckFormInput, unknown, DeckFormValues>({
     resolver: zodResolver(deckFormSchema),
@@ -131,28 +138,28 @@ function DeckForm({
       className="space-y-3"
       onSubmit={handleSubmit((values) => startTransition(() => void onSubmit(values)))}
     >
-      <Input {...register("name")} placeholder="Deck name" />
-      <Input {...register("description")} placeholder="Description" />
+      <Input {...register("name")} placeholder={t("deckName")} />
+      <Input {...register("description")} placeholder={t("description")} />
       <Controller
         control={control}
         name="color"
         render={({field}) => (
           <Select value={field.value ?? "emerald"} onValueChange={field.onChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Deck color" />
+              <SelectValue placeholder={t("deckColor")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="emerald">Emerald</SelectItem>
-              <SelectItem value="cyan">Cyan</SelectItem>
-              <SelectItem value="amber">Amber</SelectItem>
-              <SelectItem value="rose">Rose</SelectItem>
+              <SelectItem value="emerald">{t("colors.emerald")}</SelectItem>
+              <SelectItem value="cyan">{t("colors.cyan")}</SelectItem>
+              <SelectItem value="amber">{t("colors.amber")}</SelectItem>
+              <SelectItem value="rose">{t("colors.rose")}</SelectItem>
             </SelectContent>
           </Select>
         )}
       />
       <Button disabled={pending} type="submit" className="w-full">
         <Save className="size-4" />
-        {pending ? "Saving..." : submitLabel}
+        {pending ? tCommon("saving") : submitLabel}
       </Button>
     </form>
   );

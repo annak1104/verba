@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useMemo, useRef, useState, useTransition} from "react";
+import {useTranslations} from "next-intl";
 import {ArrowLeft, ArrowLeftRight, ArrowRight, Check} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -39,11 +40,11 @@ import {
 import type {LearningDirection, ReviewRating, Word} from "@/features/vocabulary/types";
 import {cn} from "@/lib/utils";
 
-const ratings: Array<{rating: ReviewRating; label: string; shortcut: string}> = [
-  {rating: "again", label: "Again", shortcut: "1"},
-  {rating: "hard", label: "Hard", shortcut: "2"},
-  {rating: "good", label: "Good", shortcut: "3"},
-  {rating: "easy", label: "Easy", shortcut: "4"}
+const ratings: Array<{rating: ReviewRating; labelKey: "again" | "hard" | "good" | "easy"; shortcut: string}> = [
+  {rating: "again", labelKey: "again", shortcut: "1"},
+  {rating: "hard", labelKey: "hard", shortcut: "2"},
+  {rating: "good", labelKey: "good", shortcut: "3"},
+  {rating: "easy", labelKey: "easy", shortcut: "4"}
 ];
 
 type PointerStart = {
@@ -55,6 +56,8 @@ export function FlashcardSession({
   initialCards,
   learningDirection
 }: Readonly<{initialCards: Word[]; learningDirection: LearningDirection}>) {
+  const t = useTranslations("Review");
+  const tPronunciation = useTranslations("Pronunciation");
   const [session, setSession] = useState<ReviewSessionState>(() => createReviewSession(initialCards));
   const [selectedRating, setSelectedRating] = useState<ReviewRating | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -146,15 +149,19 @@ export function FlashcardSession({
           <Check className="size-7" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold">Review complete</h2>
+          <h2 className="text-2xl font-bold">{t("completeTitle")}</h2>
           <p className="mt-2 text-sm font-semibold text-muted-foreground">
-            {summary.correct} correct · {summary.incorrect} missed · {summary.accuracy}% accuracy
+            {t("completeSummary", {
+              correct: summary.correct,
+              incorrect: summary.incorrect,
+              accuracy: summary.accuracy
+            })}
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-sm font-bold text-muted-foreground">
-          <ResultStat label="Cards" value={summary.total} />
-          <ResultStat label="New" value={summary.newCards} />
-          <ResultStat label="Again" value={summary.again} />
+          <ResultStat label={t("cards")} value={summary.total} />
+          <ResultStat label={t("newCards")} value={summary.newCards} />
+          <ResultStat label={t("again")} value={summary.again} />
         </div>
       </GlassCard>
     );
@@ -164,8 +171,8 @@ export function FlashcardSession({
     return (
       <EmptyState
         icon={Check}
-        title="No review cards"
-        description="No words are eligible for review right now."
+        title={t("noCardsTitle")}
+        description={t("noCardsDescription")}
       />
     );
   }
@@ -237,7 +244,7 @@ export function FlashcardSession({
 
       <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <Button
-          aria-label="Previous card"
+          aria-label={t("previousCard")}
           className="rounded-full"
           disabled={pending || submittingCardId.current != null}
           size="icon"
@@ -249,7 +256,7 @@ export function FlashcardSession({
         </Button>
 
         <div
-          aria-label="Flashcard"
+          aria-label={t("flashcard")}
           className="touch-pan-y select-none [perspective:1200px]"
           role="button"
           tabIndex={0}
@@ -272,8 +279,8 @@ export function FlashcardSession({
                   <Badge variant="outline">{current.memoryState}</Badge>
                   {!session.revealed && frontHasEnglishAudio ? (
                     <SpeakerButton
-                      aria-label={`Speak ${current.term}`}
                       className="rounded-xl"
+                      label={tPronunciation("speakEnglish")}
                       rate={rate}
                       text={current.term}
                     />
@@ -288,7 +295,7 @@ export function FlashcardSession({
 
                 <div className="flex items-center justify-center gap-2 text-xs font-bold text-muted-foreground">
                   <ArrowLeftRight className="size-4" />
-                  Tap to flip · swipe to move
+                  {t("tapHint")}
                 </div>
               </div>
 
@@ -302,7 +309,7 @@ export function FlashcardSession({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-xs font-bold uppercase tracking-normal text-muted-foreground">
-                      Correct answer
+                      {t("correctAnswer")}
                     </div>
                     <h2 className="mt-1 line-clamp-2 text-3xl font-bold leading-tight">
                       {content.expectedAnswer}
@@ -310,8 +317,8 @@ export function FlashcardSession({
                   </div>
                   {session.revealed ? (
                     <SpeakerButton
-                      aria-label={`Speak ${current.term}`}
                       className="shrink-0 rounded-xl"
+                      label={tPronunciation("speakEnglish")}
                       rate={rate}
                       text={current.term}
                     />
@@ -321,12 +328,12 @@ export function FlashcardSession({
                 </div>
 
                 <div className={cn(FLASHCARD_BACK_SCROLL_CLASS, "space-y-3")}>
-                  <AnswerLine label="English" value={content.english} />
-                  <AnswerLine label="Ukrainian" value={content.ukrainian} />
-                  <AnswerLine label="Ukrainian pronunciation" value={content.ukrainianPronunciation} />
-                  <AnswerLine label="IPA" value={content.ipa} />
-                  <AnswerLine label="English example" value={content.exampleEnglish} />
-                  <AnswerLine label="Ukrainian example" value={content.exampleUkrainian} muted />
+                  <AnswerLine label={t("english")} value={content.english} />
+                  <AnswerLine label={t("ukrainian")} value={content.ukrainian} />
+                  <AnswerLine label={t("ukrainianPronunciation")} value={content.ukrainianPronunciation} />
+                  <AnswerLine label={t("ipa")} value={content.ipa} />
+                  <AnswerLine label={t("englishExample")} value={content.exampleEnglish} />
+                  <AnswerLine label={t("ukrainianExample")} value={content.exampleUkrainian} muted />
                 </div>
               </div>
             </div>
@@ -334,7 +341,7 @@ export function FlashcardSession({
         </div>
 
         <Button
-          aria-label="Next card"
+          aria-label={t("nextCard")}
           className="rounded-full"
           disabled={pending || submittingCardId.current != null}
           size="icon"
@@ -355,7 +362,7 @@ export function FlashcardSession({
             variant={selectedRating === item.rating ? "default" : "glass"}
             onClick={() => grade(item.rating)}
           >
-            {item.label}
+            {t(item.labelKey)}
             <span className="text-xs opacity-70">{item.shortcut}</span>
           </Button>
         ))}

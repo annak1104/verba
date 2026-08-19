@@ -1,19 +1,19 @@
 "use client";
 
 import {useState} from "react";
-import {useLocale, useTranslations} from "next-intl";
+import {useTranslations} from "next-intl";
 import {Languages, Sparkles, ArrowLeftRight} from "lucide-react";
 import {GlassCard} from "@/components/ui/glass-card";
 import {Label} from "@/components/ui/label";
 import {Switch} from "@/components/ui/switch";
 import {DirectionToggle} from "@/features/review/components/direction-toggle";
 import {normalizeReviewDirection} from "@/features/review/card-content";
+import {LocaleSwitcher} from "@/features/settings/components/locale-switcher";
 import type {UserSettings} from "@/features/vocabulary/types";
 import {ThemeToggle} from "./theme-toggle";
 
 export function SettingsPanel({settings}: Readonly<{settings: UserSettings}>) {
   const t = useTranslations("Settings");
-  const locale = useLocale();
   const [direction, setDirection] = useState(normalizeReviewDirection(settings.learningDirection));
 
   return (
@@ -23,10 +23,7 @@ export function SettingsPanel({settings}: Readonly<{settings: UserSettings}>) {
             <Languages className="size-5 text-primary" />
             {t("language")}
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <LocaleOption label="English" active={locale === "en"} />
-            <LocaleOption label="Українська" active={locale === "uk"} />
-          </div>
+          <LocaleSwitcher className="w-full" />
       </GlassCard>
       <GlassCard className="flex items-center justify-between p-5">
           <Label>{t("theme")}</Label>
@@ -51,20 +48,6 @@ export function SettingsPanel({settings}: Readonly<{settings: UserSettings}>) {
             <Switch className="ml-auto" disabled />
           </div>
       </GlassCard>
-    </div>
-  );
-}
-
-function LocaleOption({label, active}: Readonly<{label: string; active: boolean}>) {
-  return (
-    <div
-      className={
-        active
-          ? "rounded-2xl border border-primary/35 bg-primary/12 p-3 text-center text-sm font-bold text-primary shadow-sm"
-          : "glass-control rounded-2xl p-3 text-center text-sm font-bold text-muted-foreground"
-      }
-    >
-      {label}
     </div>
   );
 }

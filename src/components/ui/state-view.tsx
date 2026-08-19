@@ -4,7 +4,7 @@ import {GlassCard} from "@/components/ui/glass-card";
 import {cn} from "@/lib/utils";
 
 export function EmptyState({
-  title = "Nothing here yet",
+  title = "",
   description,
   icon: Icon = Inbox,
   className
@@ -32,7 +32,7 @@ export function EmptyState({
 }
 
 export function ErrorState({
-  title = "Something went wrong",
+  title = "",
   description,
   className
 }: Readonly<{title?: string; description?: string; className?: string}>) {

@@ -1,6 +1,7 @@
 "use client";
 
 import {Volume2, VolumeX} from "lucide-react";
+import {useTranslations} from "next-intl";
 import {Button, type ButtonProps} from "@/components/ui/button";
 import {cn} from "@/lib/utils";
 import {DEFAULT_SPEECH_RATE, useTextToSpeech} from "@/features/pronunciation/use-text-to-speech";
@@ -15,7 +16,7 @@ type SpeakerButtonProps = Omit<ButtonProps, "onClick" | "children"> & {
 export function SpeakerButton({
   text,
   rate = DEFAULT_SPEECH_RATE,
-  label = "Speak English",
+  label,
   showLabel = false,
   className,
   disabled,
@@ -23,15 +24,27 @@ export function SpeakerButton({
   variant = "glass",
   ...props
 }: Readonly<SpeakerButtonProps>) {
-  const {message, speak, speaking, supported} = useTextToSpeech();
+  const t = useTranslations("Pronunciation");
+  const {speak, speaking, status, supported} = useTextToSpeech();
   const canSpeak = supported && text.trim().length > 0;
+  const buttonLabel = label ?? t("speakEnglish");
+  const statusMessage =
+    status === "empty"
+      ? t("empty")
+      : status === "unsupported"
+        ? t("unsupported")
+        : status === "error"
+          ? t("error")
+          : null;
   const title = !supported
-    ? "Speech synthesis is not supported in this browser."
-    : message ?? label;
+    ? t("unsupported")
+    : status == null
+      ? buttonLabel
+      : statusMessage ?? buttonLabel;
 
   return (
     <Button
-      aria-label={label}
+      aria-label={buttonLabel}
       className={cn(speaking && "animate-pulse text-primary", className)}
       disabled={disabled || !canSpeak}
       size={size}
@@ -47,7 +60,7 @@ export function SpeakerButton({
       {...props}
     >
       {supported ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-      {showLabel ? <span>{speaking ? "Speaking" : "Speak"}</span> : null}
+      {showLabel ? <span>{speaking ? t("speaking") : t("speak")}</span> : null}
     </Button>
   );
 }

@@ -25,7 +25,7 @@ export async function submitOnboarding(
   });
 
   if (!parsed.success) {
-    return {error: "Please check your onboarding choices."};
+    return {error: "invalid"};
   }
 
   await completeOnboarding(parsed.data);

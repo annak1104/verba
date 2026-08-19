@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {X} from "lucide-react";
+import {useTranslations} from "next-intl";
 import {Button} from "@/components/ui/button";
 import {cn} from "@/lib/utils";
 
@@ -18,6 +19,8 @@ function SheetContent({
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
   side?: "bottom" | "right";
 }) {
+  const t = useTranslations("Common");
+
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/35 backdrop-blur-sm" />
@@ -33,7 +36,7 @@ function SheetContent({
       >
         {children}
         <DialogPrimitive.Close asChild>
-          <Button className="absolute right-3 top-3" size="icon" variant="glass" aria-label="Close">
+          <Button className="absolute right-3 top-3" size="icon" variant="glass" aria-label={t("close")}>
             <X className="size-4" />
           </Button>
         </DialogPrimitive.Close>
