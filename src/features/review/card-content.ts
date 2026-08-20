@@ -4,6 +4,7 @@ export type ReviewCardContent = {
   frontTitle: string;
   frontSubtitle: string;
   expectedAnswer: string;
+  secondaryAnswer: string;
   english: string;
   ukrainian: string;
   ukrainianPronunciation: string;
@@ -21,6 +22,7 @@ export function getReviewCardContent(
       frontTitle: "",
       frontSubtitle: "",
       expectedAnswer: "",
+      secondaryAnswer: "",
       english: "",
       ukrainian: "",
       ukrainianPronunciation: "",
@@ -36,6 +38,7 @@ export function getReviewCardContent(
     frontTitle: englishToUkrainian ? card.term : card.meaning,
     frontSubtitle: englishToUkrainian ? card.ipa ?? "" : card.pronunciation ?? "",
     expectedAnswer: englishToUkrainian ? card.meaning : card.term,
+    secondaryAnswer: englishToUkrainian ? card.term : card.meaning,
     english: card.term,
     ukrainian: card.meaning,
     ukrainianPronunciation: card.pronunciation ?? "",

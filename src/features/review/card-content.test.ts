@@ -12,6 +12,7 @@ describe("review card content", () => {
 
     expect(content.frontTitle).toBe("word");
     expect(content.expectedAnswer).toBe("слово");
+    expect(content.secondaryAnswer).toBe("word");
     expect(content.ukrainianPronunciation).toBe("slovo");
     expect(content.ipa).toBe("/wɜːd/");
   });
@@ -22,6 +23,7 @@ describe("review card content", () => {
     expect(content.frontTitle).toBe("слово");
     expect(content.frontSubtitle).toBe("slovo");
     expect(content.expectedAnswer).toBe("word");
+    expect(content.secondaryAnswer).toBe("слово");
     expect(content.english).toBe("word");
   });
 

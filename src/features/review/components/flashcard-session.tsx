@@ -327,13 +327,18 @@ export function FlashcardSession({
                   )}
                 </div>
 
-                <div className={cn(FLASHCARD_BACK_SCROLL_CLASS, "space-y-3")}>
-                  <AnswerLine label={t("english")} value={content.english} />
-                  <AnswerLine label={t("ukrainian")} value={content.ukrainian} />
-                  <AnswerLine label={t("ukrainianPronunciation")} value={content.ukrainianPronunciation} />
-                  <AnswerLine label={t("ipa")} value={content.ipa} />
-                  <AnswerLine label={t("englishExample")} value={content.exampleEnglish} />
-                  <AnswerLine label={t("ukrainianExample")} value={content.exampleUkrainian} muted />
+                <div className={cn(FLASHCARD_BACK_SCROLL_CLASS, "space-y-4")}>
+                  {content.ipa ? (
+                    <p className="text-sm font-semibold text-muted-foreground">{content.ipa}</p>
+                  ) : null}
+                  <AnswerValue className="text-lg font-semibold leading-7" value={content.secondaryAnswer} />
+                  <div className="space-y-2 pt-1">
+                    <AnswerValue className="text-sm leading-6" value={content.exampleEnglish} />
+                    <AnswerValue
+                      className="text-sm leading-6 text-muted-foreground"
+                      value={content.exampleUkrainian}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -372,21 +377,13 @@ export function FlashcardSession({
   );
 }
 
-function AnswerLine({
-  label,
-  value,
-  muted = false
-}: Readonly<{label: string; value: string; muted?: boolean}>) {
+function AnswerValue({
+  className,
+  value
+}: Readonly<{className: string; value: string}>) {
   if (!value) return null;
 
-  return (
-    <div>
-      <div className="text-xs font-bold uppercase tracking-normal text-muted-foreground">{label}</div>
-      <p className={muted ? "mt-1 text-sm leading-6 text-muted-foreground" : "mt-1 text-sm leading-6"}>
-        {value}
-      </p>
-    </div>
-  );
+  return <p className={className}>{value}</p>;
 }
 
 function ResultStat({label, value}: Readonly<{label: string; value: number}>) {

@@ -234,7 +234,9 @@
     "learningDirection": "Learning direction",
     "dailyGoal": "Daily goal",
     "ai": "Optional AI",
-    "aiDescription": "Use AI to translate and enrich word cards. Core study flows work normally when this is off."
+    "aiDescription": "Use AI to translate and enrich word cards. Core study flows work normally when this is off.",
+    "aiStatusOn": "AI on",
+    "aiStatusOff": "AI off"
   },
   "Theme": {"toggle": "Toggle theme"},
   "Pronunciation": {
