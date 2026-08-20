@@ -1,6 +1,6 @@
 "use client";
 
-import {useState} from "react";
+import {useState, useTransition} from "react";
 import {useTranslations} from "next-intl";
 import {Languages, Sparkles, ArrowLeftRight} from "lucide-react";
 import {GlassCard} from "@/components/ui/glass-card";
@@ -8,6 +8,7 @@ import {Label} from "@/components/ui/label";
 import {Switch} from "@/components/ui/switch";
 import {DirectionToggle} from "@/features/review/components/direction-toggle";
 import {normalizeReviewDirection} from "@/features/review/card-content";
+import {updateAiEnabledAction} from "@/features/settings/actions";
 import {LocaleSwitcher} from "@/features/settings/components/locale-switcher";
 import type {UserSettings} from "@/features/vocabulary/types";
 import {ThemeToggle} from "./theme-toggle";
@@ -15,6 +16,8 @@ import {ThemeToggle} from "./theme-toggle";
 export function SettingsPanel({settings}: Readonly<{settings: UserSettings}>) {
   const t = useTranslations("Settings");
   const [direction, setDirection] = useState(normalizeReviewDirection(settings.learningDirection));
+  const [aiEnabled, setAiEnabled] = useState(settings.aiEnabled);
+  const [aiPending, startAiTransition] = useTransition();
 
   return (
     <div className="space-y-3">
@@ -45,7 +48,22 @@ export function SettingsPanel({settings}: Readonly<{settings: UserSettings}>) {
               <div className="font-bold">{t("ai")}</div>
               <p className="text-sm leading-6 text-muted-foreground">{t("aiDescription")}</p>
             </div>
-            <Switch className="ml-auto" disabled />
+            <Switch
+              checked={aiEnabled}
+              className="ml-auto"
+              disabled={aiPending}
+              aria-label={t("ai")}
+              onCheckedChange={(checked) => {
+                setAiEnabled(checked);
+                startAiTransition(async () => {
+                  try {
+                    await updateAiEnabledAction(checked);
+                  } catch {
+                    setAiEnabled(!checked);
+                  }
+                });
+              }}
+            />
           </div>
       </GlassCard>
     </div>

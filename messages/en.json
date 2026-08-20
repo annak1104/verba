@@ -158,7 +158,18 @@
     "createSubmit": "Create word",
     "saveSubmit": "Save word",
     "saveChanges": "Save changes",
-    "validation": "Please check this field."
+    "validation": "Please check this field.",
+    "aiFill": "Fill with AI",
+    "aiFillMissing": "Fill missing",
+    "aiFilling": "Filling...",
+    "aiGenerating": "Generating...",
+    "aiTranslate": "Translate",
+    "aiRegenerate": "Regenerate",
+    "aiWordRequired": "Enter an English word first.",
+    "aiNoMissingFields": "All AI-supported fields already have values.",
+    "aiDisabled": "AI assistance is off or unavailable. You can still fill the card manually.",
+    "aiUnavailable": "AI is unavailable right now. You can still fill the card manually.",
+    "aiOverwriteConfirm": "Some generated fields already have values. Replace them?"
   },
   "Decks": {
     "title": "Decks",
@@ -221,7 +232,7 @@
     "learningDirection": "Learning direction",
     "dailyGoal": "Daily goal",
     "ai": "Optional AI",
-    "aiDescription": "Provider-independent hooks are configured, but core study flows work offline from AI."
+    "aiDescription": "Use AI to translate and enrich word cards. Core study flows work normally when this is off."
   },
   "Theme": {"toggle": "Toggle theme"},
   "Pronunciation": {

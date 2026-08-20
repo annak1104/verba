@@ -1,18 +1,29 @@
-export type AiVocabularySuggestion = {
-  meaning: string;
-  examples: string[];
-  pronunciation?: string;
+export type AIProviderId = "openrouter";
+
+export type AIMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
 };
 
-export interface VocabularyAiProvider {
-  suggest(term: string, locale: "en" | "uk"): Promise<AiVocabularySuggestion>;
-}
+export type AIResponseFormat = {
+  schema: unknown;
+  schemaName: string;
+};
 
-export class NoopVocabularyAiProvider implements VocabularyAiProvider {
-  async suggest(): Promise<AiVocabularySuggestion> {
-    return {
-      meaning: "",
-      examples: []
-    };
-  }
+export type AICompletionRequest = {
+  messages: AIMessage[];
+  responseFormat?: AIResponseFormat;
+  temperature?: number;
+  maxTokens?: number;
+};
+
+export type AICompletionResult = {
+  content: string;
+  model?: string;
+};
+
+export interface AIProvider {
+  readonly id: AIProviderId;
+  isAvailable(): boolean;
+  complete(request: AICompletionRequest): Promise<AICompletionResult>;
 }

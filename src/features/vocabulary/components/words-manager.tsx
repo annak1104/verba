@@ -19,17 +19,20 @@ import {WordForm} from "@/features/vocabulary/components/word-form";
 import {
   createCardAction,
   deleteCardAction,
+  generateWordCardAction,
   toggleFavoriteAction,
   updateCardAction
 } from "@/features/vocabulary/actions";
 import type {CardFilters, Deck, Word} from "@/features/vocabulary/types";
 
 export function WordsManager({
+  aiAvailable,
   words,
   decks,
   tags,
   filters
 }: Readonly<{
+  aiAvailable: boolean;
   words: Word[];
   decks: Deck[];
   tags: Array<{id: string; name: string; color: string}>;
@@ -43,7 +46,13 @@ export function WordsManager({
         <details>
           <summary className="cursor-pointer list-none text-lg font-bold">{t("createWord")}</summary>
           <div className="mt-5">
-            <WordForm decks={decks} submitLabel={t("createWord")} onSubmit={createCardAction} />
+            <WordForm
+              aiAvailable={aiAvailable}
+              decks={decks}
+              submitLabel={t("createWord")}
+              onGenerateWordCard={generateWordCardAction}
+              onSubmit={createCardAction}
+            />
           </div>
         </details>
       </GlassCard>
@@ -55,7 +64,7 @@ export function WordsManager({
       ) : (
         <div className="space-y-3">
           {words.map((word) => (
-            <WordRow key={word.id} word={word} decks={decks} />
+            <WordRow key={word.id} aiAvailable={aiAvailable} word={word} decks={decks} />
           ))}
         </div>
       )}
@@ -129,7 +138,11 @@ function WordsFilters({
   );
 }
 
-function WordRow({word, decks}: Readonly<{word: Word; decks: Deck[]}>) {
+function WordRow({
+  aiAvailable,
+  word,
+  decks
+}: Readonly<{aiAvailable: boolean; word: Word; decks: Deck[]}>) {
   const t = useTranslations("Words");
   const tCommon = useTranslations("Common");
   const tPronunciation = useTranslations("Pronunciation");
@@ -208,9 +221,11 @@ function WordRow({word, decks}: Readonly<{word: Word; decks: Deck[]}>) {
           </summary>
           <div className="col-span-3 pt-2">
             <WordForm
+              aiAvailable={aiAvailable}
               decks={decks}
               word={word}
               submitLabel={t("saveChanges")}
+              onGenerateWordCard={generateWordCardAction}
               onSubmit={(values) => updateCardAction(word.id, values)}
             />
           </div>

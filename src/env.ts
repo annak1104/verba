@@ -1,7 +1,22 @@
+import "server-only";
+
 import { z } from "zod";
 
 const rawNodeEnv = process.env.NODE_ENV ?? "development";
 const isProduction = rawNodeEnv === "production";
+
+const booleanEnvSchema = z
+  .preprocess(
+    (value) => (typeof value === "string" ? value.trim().toLowerCase() : value),
+    z.enum(["true", "false"]).catch("false")
+  )
+  .transform((value) => value === "true");
+
+const optionalEnvString = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? value : undefined));
 
 const envSchema = z
   .object({
@@ -22,8 +37,10 @@ const envSchema = z
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: z
       .string()
       .default("/onboarding"),
-    AI_PROVIDER: z.string().optional(),
-    AI_API_KEY: z.string().optional(),
+    AI_ENABLED: booleanEnvSchema.default(false),
+    AI_PROVIDER: z.string().trim().default("openrouter"),
+    OPENROUTER_API_KEY: optionalEnvString,
+    OPENROUTER_MODEL: z.string().trim().min(1).default("openrouter/free"),
   })
   .superRefine((value, ctx) => {
     if (!isProduction) {
@@ -59,8 +76,10 @@ export const env = envSchema.parse({
     process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,
   NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:
     process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,
+  AI_ENABLED: process.env.AI_ENABLED,
   AI_PROVIDER: process.env.AI_PROVIDER,
-  AI_API_KEY: process.env.AI_API_KEY,
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
 });
 
 export type Env = typeof env;

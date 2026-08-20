@@ -2,6 +2,14 @@
 
 import {revalidatePath} from "next/cache";
 import {getTranslations} from "next-intl/server";
+import {z} from "zod";
+import {
+  aiVocabularySuggestionSchema,
+  suggestVocabulary,
+  type AiVocabularySuggestion,
+  type VocabularyEnrichmentField
+} from "@/features/ai/vocabulary";
+import {isUserAIAssistanceAvailable} from "@/features/settings/services/settings-service";
 import {
   createCard,
   createDeck,
@@ -21,6 +29,78 @@ export type VocabularyActionState = {
   ok: boolean;
   message: string;
 };
+
+export type GenerateWordCardState =
+  | {
+      ok: true;
+      values: AiVocabularySuggestion;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+const aiGeneratedFieldNames = [
+  "ukrainianTranslation",
+  "ukrainianPronunciation",
+  "ipa",
+  "exampleEnglish",
+  "exampleUkrainian"
+] as const;
+
+const aiGeneratedFieldSchema = z.enum(aiGeneratedFieldNames);
+
+const generateWordCardSchema = z.object({
+  english: cardFormSchema.shape.english,
+  locale: z.enum(["en", "uk"]),
+  context: aiVocabularySuggestionSchema.partial().optional(),
+  requestedFields: z.array(aiGeneratedFieldSchema).min(1).max(5).optional()
+});
+
+export async function generateWordCardAction(values: unknown): Promise<GenerateWordCardState> {
+  const t = await getTranslations("WordForm");
+  const aiAvailable = await isUserAIAssistanceAvailable();
+  if (!aiAvailable) {
+    return {ok: false, message: t("aiDisabled")};
+  }
+
+  const parsed = generateWordCardSchema.safeParse(values);
+  if (!parsed.success) {
+    return {ok: false, message: t("aiWordRequired")};
+  }
+
+  const requestedFields = parsed.data.requestedFields as
+    | VocabularyEnrichmentField[]
+    | undefined;
+  const context = cleanVocabularyContext(parsed.data.context);
+  if (requestedFields) {
+    context.requestedFields = requestedFields;
+  }
+
+  const suggestion = await suggestVocabulary(parsed.data.english, parsed.data.locale, context);
+  if (!suggestion) {
+    return {ok: false, message: t("aiUnavailable")};
+  }
+
+  return {ok: true, values: suggestion};
+}
+
+function cleanVocabularyContext(
+  context: Partial<Record<VocabularyEnrichmentField, string | undefined>> | undefined
+) {
+  const cleanContext: Partial<AiVocabularySuggestion> & {
+    requestedFields?: VocabularyEnrichmentField[];
+  } = {};
+
+  for (const field of aiGeneratedFieldNames) {
+    const value = context?.[field]?.trim();
+    if (value) {
+      cleanContext[field] = value;
+    }
+  }
+
+  return cleanContext;
+}
 
 export async function createCardAction(values: unknown): Promise<VocabularyActionState> {
   const t = await getTranslations("Actions");

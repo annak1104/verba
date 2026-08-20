@@ -1,5 +1,6 @@
 import {getTranslations} from "next-intl/server";
 import {PageHeader} from "@/components/layout/page-header";
+import {isUserAIAssistanceAvailable} from "@/features/settings/services/settings-service";
 import {WordsManager} from "@/features/vocabulary/components/words-manager";
 import {getDecks, getTags, getWords} from "@/features/vocabulary/services/vocabulary-service";
 import type {CardFilters} from "@/features/vocabulary/types";
@@ -13,11 +14,18 @@ export default async function WordsPage({searchParams}: WordsPageProps) {
   const params = await searchParams;
   const filters = toFilters(params);
   const [words, decks, tags] = await Promise.all([getWords(filters), getDecks(), getTags()]);
+  const aiAvailable = await isUserAIAssistanceAvailable();
 
   return (
     <div className="space-y-5">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <WordsManager words={words} decks={decks} tags={tags} filters={filters} />
+      <WordsManager
+        aiAvailable={aiAvailable}
+        words={words}
+        decks={decks}
+        tags={tags}
+        filters={filters}
+      />
     </div>
   );
 }

@@ -2,9 +2,9 @@
 
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Controller, useForm} from "react-hook-form";
-import {useTransition} from "react";
-import {useTranslations} from "next-intl";
-import {Save} from "lucide-react";
+import {useRef, useState, useTransition} from "react";
+import {useLocale, useTranslations} from "next-intl";
+import {Save, Sparkles} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
@@ -21,28 +21,56 @@ import {
   type CardFormValues
 } from "@/features/vocabulary/schemas";
 import type {Deck, Word} from "@/features/vocabulary/types";
-import type {VocabularyActionState} from "@/features/vocabulary/actions";
+import type {
+  GenerateWordCardState,
+  VocabularyActionState
+} from "@/features/vocabulary/actions";
+
+const aiGeneratedFields = [
+  "ukrainianTranslation",
+  "ukrainianPronunciation",
+  "ipa",
+  "exampleEnglish",
+  "exampleUkrainian"
+] as const;
+type AiGeneratedField = (typeof aiGeneratedFields)[number];
 
 export function WordForm({
   decks,
   word,
   submitLabel,
-  onSubmit
+  onSubmit,
+  onGenerateWordCard,
+  aiAvailable
 }: Readonly<{
   decks: Deck[];
   word?: Word;
   submitLabel: string;
   onSubmit: (values: CardFormValues) => Promise<VocabularyActionState>;
+  onGenerateWordCard: (values: {
+    english: string;
+    locale: "en" | "uk";
+    context: Partial<Record<AiGeneratedField, string>>;
+    requestedFields: AiGeneratedField[];
+  }) => Promise<GenerateWordCardState>;
+  aiAvailable: boolean;
 }>) {
   const t = useTranslations("WordForm");
   const tCommon = useTranslations("Common");
+  const locale = useLocale() === "uk" ? "uk" : "en";
   const [pending, startTransition] = useTransition();
+  const [aiPending, setAiPending] = useState(false);
+  const [activeAiRequest, setActiveAiRequest] = useState<AiGeneratedField | "missing" | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const aiRequestPendingRef = useRef(false);
   const {
     register,
     control,
     handleSubmit,
     formState: {errors},
-    reset
+    getValues,
+    reset,
+    setValue
   } = useForm<CardFormInput, unknown, CardFormValues>({
     resolver: zodResolver(cardFormSchema),
     defaultValues: {
@@ -59,6 +87,89 @@ export function WordForm({
       tags: word?.tags.map((tag) => tag.name).join(", ") ?? ""
     }
   });
+
+  function getAiContext() {
+    return aiGeneratedFields.reduce<Partial<Record<AiGeneratedField, string>>>(
+      (context, field) => {
+        const value = String(getValues(field) ?? "").trim();
+        if (value) {
+          context[field] = value;
+        }
+
+        return context;
+      },
+      {}
+    );
+  }
+
+  function hasFieldValue(field: AiGeneratedField) {
+    return String(getValues(field) ?? "").trim().length > 0;
+  }
+
+  async function handleAiEnrichment({
+    fields,
+    request,
+    fillOnlyMissing = false
+  }: {
+    fields: AiGeneratedField[];
+    request: AiGeneratedField | "missing";
+    fillOnlyMissing?: boolean;
+  }) {
+    if (aiRequestPendingRef.current) {
+      return;
+    }
+
+    const english = String(getValues("english") ?? "").trim();
+    if (!english) {
+      setAiError(t("aiWordRequired"));
+      return;
+    }
+
+    const fieldsToApply = fillOnlyMissing
+      ? fields.filter((field) => !hasFieldValue(field))
+      : fields;
+    if (fieldsToApply.length === 0) {
+      setAiError(t("aiNoMissingFields"));
+      return;
+    }
+
+    const wouldOverwrite = fieldsToApply.some((field) => hasFieldValue(field));
+    if (wouldOverwrite && !window.confirm(t("aiOverwriteConfirm"))) {
+      return;
+    }
+
+    aiRequestPendingRef.current = true;
+    setAiPending(true);
+    setActiveAiRequest(request);
+    setAiError(null);
+
+    try {
+      const result = await onGenerateWordCard({
+        english,
+        locale,
+        context: getAiContext(),
+        requestedFields: fieldsToApply
+      });
+      if (!result.ok) {
+        setAiError(result.message);
+        return;
+      }
+
+      for (const field of fieldsToApply) {
+        setValue(field, result.values[field], {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true
+        });
+      }
+    } catch {
+      setAiError(t("aiUnavailable"));
+    } finally {
+      aiRequestPendingRef.current = false;
+      setAiPending(false);
+      setActiveAiRequest(null);
+    }
+  }
 
   return (
     <form
@@ -86,25 +197,117 @@ export function WordForm({
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t("english")} error={errors.english ? t("validation") : undefined}>
-          <Input {...register("english")} autoComplete="off" />
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+            <Input {...register("english")} autoComplete="off" />
+            {aiAvailable ? (
+              <Button
+                className="px-3"
+                disabled={aiPending || pending}
+                size="sm"
+                type="button"
+                variant="glass"
+                onClick={() =>
+                  void handleAiEnrichment({
+                    fields: [...aiGeneratedFields],
+                    request: "missing",
+                    fillOnlyMissing: true
+                  })
+                }
+              >
+                <Sparkles className="size-4" />
+                {activeAiRequest === "missing" ? t("aiFilling") : t("aiFillMissing")}
+              </Button>
+            ) : null}
+          </div>
+          {aiError ? <p className="px-1 text-sm text-destructive">{aiError}</p> : null}
         </Field>
         <Field label={t("ukrainianTranslation")} error={errors.ukrainianTranslation ? t("validation") : undefined}>
-          <Input {...register("ukrainianTranslation")} autoComplete="off" />
+          <AiInput
+            aiAvailable={aiAvailable}
+            buttonLabel={t("aiTranslate")}
+            disabled={aiPending || pending}
+            loading={activeAiRequest === "ukrainianTranslation"}
+            loadingLabel={t("aiGenerating")}
+            onGenerate={() =>
+              void handleAiEnrichment({
+                fields: ["ukrainianTranslation"],
+                request: "ukrainianTranslation"
+              })
+            }
+          >
+            <Input {...register("ukrainianTranslation")} autoComplete="off" />
+          </AiInput>
         </Field>
         <Field label={t("ukrainianPronunciation")} error={errors.ukrainianPronunciation ? t("validation") : undefined}>
-          <Input {...register("ukrainianPronunciation")} autoComplete="off" />
+          <AiInput
+            aiAvailable={aiAvailable}
+            buttonLabel={t("aiRegenerate")}
+            disabled={aiPending || pending}
+            loading={activeAiRequest === "ukrainianPronunciation"}
+            loadingLabel={t("aiGenerating")}
+            onGenerate={() =>
+              void handleAiEnrichment({
+                fields: ["ukrainianPronunciation"],
+                request: "ukrainianPronunciation"
+              })
+            }
+          >
+            <Input {...register("ukrainianPronunciation")} autoComplete="off" />
+          </AiInput>
         </Field>
         <Field label={t("ipa")} error={errors.ipa ? t("validation") : undefined}>
-          <Input {...register("ipa")} autoComplete="off" placeholder="/wɜːd/" />
+          <AiInput
+            aiAvailable={aiAvailable}
+            buttonLabel={t("aiRegenerate")}
+            disabled={aiPending || pending}
+            loading={activeAiRequest === "ipa"}
+            loadingLabel={t("aiGenerating")}
+            onGenerate={() =>
+              void handleAiEnrichment({
+                fields: ["ipa"],
+                request: "ipa"
+              })
+            }
+          >
+            <Input {...register("ipa")} autoComplete="off" placeholder="/wɜːd/" />
+          </AiInput>
         </Field>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t("englishExample")} error={errors.exampleEnglish ? t("validation") : undefined}>
-          <Textarea {...register("exampleEnglish")} />
+          <AiInput
+            aiAvailable={aiAvailable}
+            buttonLabel={t("aiRegenerate")}
+            disabled={aiPending || pending}
+            loading={activeAiRequest === "exampleEnglish"}
+            loadingLabel={t("aiGenerating")}
+            onGenerate={() =>
+              void handleAiEnrichment({
+                fields: ["exampleEnglish"],
+                request: "exampleEnglish"
+              })
+            }
+          >
+            <Textarea {...register("exampleEnglish")} />
+          </AiInput>
         </Field>
         <Field label={t("ukrainianExample")} error={errors.exampleUkrainian ? t("validation") : undefined}>
-          <Textarea {...register("exampleUkrainian")} />
+          <AiInput
+            aiAvailable={aiAvailable}
+            buttonLabel={t("aiRegenerate")}
+            disabled={aiPending || pending}
+            loading={activeAiRequest === "exampleUkrainian"}
+            loadingLabel={t("aiGenerating")}
+            onGenerate={() =>
+              void handleAiEnrichment({
+                fields: ["exampleUkrainian"],
+                request: "exampleUkrainian"
+              })
+            }
+          >
+            <Textarea {...register("exampleUkrainian")} />
+          </AiInput>
         </Field>
       </div>
 
@@ -146,7 +349,7 @@ export function WordForm({
         {t("favorite")}
       </label>
 
-      <Button className="w-full" disabled={pending || decks.length === 0} type="submit">
+      <Button className="w-full" disabled={pending || aiPending || decks.length === 0} type="submit">
         <Save className="size-4" />
         {pending ? tCommon("saving") : submitLabel}
       </Button>
@@ -164,6 +367,45 @@ function Field({
       <Label className="px-1 text-[13px] font-bold text-muted-foreground">{label}</Label>
       {children}
       {error ? <p className="px-1 text-sm text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+function AiInput({
+  aiAvailable,
+  buttonLabel,
+  children,
+  disabled,
+  loading,
+  loadingLabel,
+  onGenerate
+}: Readonly<{
+  aiAvailable: boolean;
+  buttonLabel: string;
+  children: React.ReactNode;
+  disabled: boolean;
+  loading: boolean;
+  loadingLabel: string;
+  onGenerate: () => void;
+}>) {
+  if (!aiAvailable) {
+    return children;
+  }
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+      {children}
+      <Button
+        className="px-3"
+        disabled={disabled}
+        size="sm"
+        type="button"
+        variant="glass"
+        onClick={onGenerate}
+      >
+        <Sparkles className="size-4" />
+        {loading ? loadingLabel : buttonLabel}
+      </Button>
     </div>
   );
 }

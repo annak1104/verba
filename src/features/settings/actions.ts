@@ -16,6 +16,13 @@ export async function updateLearningDirectionAction(direction: LearningDirection
   revalidatePath("/settings");
 }
 
+export async function updateAiEnabledAction(enabled: boolean) {
+  await updateUserSettings({aiEnabled: Boolean(enabled)});
+  revalidatePath("/learn");
+  revalidatePath("/words");
+  revalidatePath("/settings");
+}
+
 export async function updateLocaleAction(locale: AppLocale) {
   const nextLocale = routing.locales.includes(locale) ? locale : routing.defaultLocale;
   const cookieStore = await cookies();
