@@ -40,7 +40,7 @@ const envSchema = z
     AI_ENABLED: booleanEnvSchema.default(false),
     AI_PROVIDER: z.string().trim().default("openrouter"),
     OPENROUTER_API_KEY: optionalEnvString,
-    OPENROUTER_MODEL: z.string().trim().min(1).default("openrouter/free"),
+    OPENROUTER_MODEL: z.string().trim().min(1).default("dots-studio/dots-3-note-preview:free"),
   })
   .superRefine((value, ctx) => {
     if (!isProduction) {

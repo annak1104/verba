@@ -1,7 +1,7 @@
 import "server-only";
 
 import {toJSONSchema, type ZodType} from "zod";
-import type {AIMessage, AIProvider} from "@/features/ai/ports";
+import {AIProviderError, type AICompletionMetadata, type AIMessage, type AIProvider} from "@/features/ai/ports";
 
 export type AIGenerateObjectRequest<T> = {
   messages: AIMessage[];
@@ -9,7 +9,33 @@ export type AIGenerateObjectRequest<T> = {
   schemaName: string;
   temperature?: number;
   maxTokens?: number;
+  topP?: number;
 };
+
+export type AIGenerateObjectSuccess<T> = {
+  ok: true;
+  data: T;
+  metadata: AICompletionMetadata;
+};
+
+export type AIGenerateObjectFailure = {
+  ok: false;
+  code:
+    | "disabled"
+    | "timeout"
+    | "rate_limited"
+    | "server_error"
+    | "http_error"
+    | "incomplete_response"
+    | "invalid_json"
+    | "invalid_schema"
+    | "invalid_response";
+  metadata?: Partial<AICompletionMetadata>;
+};
+
+export type AIGenerateObjectResult<T> =
+  | AIGenerateObjectSuccess<T>
+  | AIGenerateObjectFailure;
 
 type AIServiceOptions = {
   enabled: boolean;
@@ -24,8 +50,15 @@ export class AIService {
   }
 
   async generateObject<T>(request: AIGenerateObjectRequest<T>): Promise<T | null> {
+    const result = await this.generateObjectResult(request);
+    return result.ok ? result.data : null;
+  }
+
+  async generateObjectResult<T>(
+    request: AIGenerateObjectRequest<T>
+  ): Promise<AIGenerateObjectResult<T>> {
     if (!this.isAvailable() || !this.options.provider) {
-      return null;
+      return {ok: false, code: "disabled"};
     }
 
     try {
@@ -38,14 +71,69 @@ export class AIService {
         ...(request.temperature === undefined
           ? {}
           : {temperature: request.temperature}),
-        ...(request.maxTokens === undefined ? {} : {maxTokens: request.maxTokens})
+        ...(request.maxTokens === undefined ? {} : {maxTokens: request.maxTokens}),
+        ...(request.topP === undefined ? {} : {topP: request.topP})
       });
-      const json = JSON.parse(completion.content) as unknown;
-      const parsed = request.schema.safeParse(json);
+      let json: unknown;
+      try {
+        json = JSON.parse(completion.content) as unknown;
+      } catch (error) {
+        logAIServiceEvent("error", "json_parse_error", {
+          ...completion.metadata,
+          jsonParseError: error instanceof Error ? error.message : String(error)
+        });
+        return {
+          ok: false,
+          code: "invalid_json",
+          metadata: completion.metadata
+        };
+      }
 
-      return parsed.success ? parsed.data : null;
-    } catch {
-      return null;
+      const parsed = request.schema.safeParse(json);
+      if (!parsed.success) {
+        logAIServiceEvent("error", "zod_validation_error", {
+          ...completion.metadata,
+          zodValidationErrors: parsed.error.issues
+        });
+        return {
+          ok: false,
+          code: "invalid_schema",
+          metadata: completion.metadata
+        };
+      }
+
+      return {
+        ok: true,
+        data: parsed.data,
+        metadata: completion.metadata
+      };
+    } catch (error) {
+      if (error instanceof AIProviderError) {
+        return {
+          ok: false,
+          code: error.code,
+          ...(error.metadata ? {metadata: error.metadata} : {})
+        };
+      }
+
+      logAIServiceEvent("error", "unexpected_error", {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return {ok: false, code: "invalid_response"};
     }
   }
+}
+
+function logAIServiceEvent(
+  level: "info" | "warn" | "error",
+  event: string,
+  payload: Record<string, unknown>
+) {
+  console[level](
+    JSON.stringify({
+      source: "ai.service",
+      event,
+      ...payload
+    })
+  );
 }

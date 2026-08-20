@@ -4,6 +4,7 @@ import {z} from "zod";
 import {getAIService} from "@/features/ai";
 
 export const aiVocabularySuggestionSchema = z.object({
+  english: z.string().trim().min(1).max(180),
   ukrainianTranslation: z.string().trim().min(1).max(2000),
   ukrainianPronunciation: z.string().trim().min(1).max(180),
   ipa: z.string().trim().min(1).max(180),
@@ -21,48 +22,52 @@ export async function suggestVocabulary(
   context?: Partial<AiVocabularySuggestion> & {
     requestedFields?: VocabularyEnrichmentField[];
   }
-): Promise<AiVocabularySuggestion | null> {
+) {
   const trimmedTerm = term.trim();
   if (!trimmedTerm) {
-    return null;
+    return {ok: false as const, code: "invalid_response" as const};
   }
 
-  return getAIService().generateObject({
+  return getAIService().generateObjectResult({
     schema: aiVocabularySuggestionSchema,
     schemaName: "vocabulary_suggestion",
-    temperature: 0.2,
-    maxTokens: 500,
+    temperature: 0,
+    topP: 1,
+    maxTokens: 220,
     messages: [
       {
         role: "system",
         content:
-          "You help Ukrainian speakers learn English vocabulary. Return only JSON that matches the requested schema."
+          "Return only compact JSON matching the schema. No markdown. No explanation. No reasoning."
       },
       {
         role: "user",
         content: [
-          `Suggest a concise vocabulary card for the English term: ${trimmedTerm}`,
-          `Interface locale: ${locale}`,
-          `Requested fields: ${context?.requestedFields?.join(", ") || "all missing fields"}`,
-          "ukrainianTranslation should be a concise Ukrainian translation or explanation.",
-          "ukrainianPronunciation should be a Ukrainian-style pronunciation hint.",
-          "ipa should be standard English IPA wrapped in slashes.",
-          "exampleEnglish should be a natural English sentence using the term.",
-          "exampleUkrainian should be a Ukrainian translation of exampleEnglish.",
+          `English: ${trimmedTerm}`,
+          `Locale: ${locale}`,
+          "Return keys: english, ukrainianTranslation, ukrainianPronunciation, ipa, exampleEnglish, exampleUkrainian.",
+          "Use concise values.",
+          "ukrainianTranslation: Ukrainian translation.",
+          "ukrainianPronunciation: Ukrainian phonetic hint.",
+          "ipa: English IPA in slashes.",
+          "exampleEnglish: short natural English sentence.",
+          "exampleUkrainian: Ukrainian translation of exampleEnglish.",
           context?.exampleEnglish
-            ? `If possible, translate this existing English example for exampleUkrainian: ${context.exampleEnglish}`
+            ? `Existing exampleEnglish: ${context.exampleEnglish}`
             : "",
           context?.ukrainianTranslation
-            ? `Existing Ukrainian translation: ${context.ukrainianTranslation}`
+            ? `Existing ukrainianTranslation: ${context.ukrainianTranslation}`
             : "",
           context?.ukrainianPronunciation
-            ? `Existing Ukrainian pronunciation: ${context.ukrainianPronunciation}`
+            ? `Existing ukrainianPronunciation: ${context.ukrainianPronunciation}`
             : "",
-          context?.ipa ? `Existing IPA: ${context.ipa}` : "",
+          context?.ipa ? `Existing ipa: ${context.ipa}` : "",
           context?.exampleUkrainian
-            ? `Existing Ukrainian example: ${context.exampleUkrainian}`
+            ? `Existing exampleUkrainian: ${context.exampleUkrainian}`
             : ""
-        ].join("\n")
+        ]
+          .filter(Boolean)
+          .join("\n")
       }
     ]
   });

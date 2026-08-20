@@ -78,11 +78,19 @@ export async function generateWordCardAction(values: unknown): Promise<GenerateW
   }
 
   const suggestion = await suggestVocabulary(parsed.data.english, parsed.data.locale, context);
-  if (!suggestion) {
+  if (!suggestion.ok) {
+    if (suggestion.code === "incomplete_response") {
+      return {ok: false, message: t("aiIncomplete")};
+    }
+
+    if (suggestion.code === "invalid_json" || suggestion.code === "invalid_schema") {
+      return {ok: false, message: t("aiInvalidResponse")};
+    }
+
     return {ok: false, message: t("aiUnavailable")};
   }
 
-  return {ok: true, values: suggestion};
+  return {ok: true, values: suggestion.data};
 }
 
 function cleanVocabularyContext(

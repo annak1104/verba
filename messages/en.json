@@ -168,6 +168,8 @@
     "aiWordRequired": "Enter an English word first.",
     "aiNoMissingFields": "All AI-supported fields already have values.",
     "aiDisabled": "AI assistance is off or unavailable. You can still fill the card manually.",
+    "aiIncomplete": "AI stopped before finishing the card. Try again.",
+    "aiInvalidResponse": "AI returned an invalid card. Try again.",
     "aiUnavailable": "AI is unavailable right now. You can still fill the card manually.",
     "aiOverwriteConfirm": "Some generated fields already have values. Replace them?"
   },
