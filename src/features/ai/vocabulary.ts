@@ -10,7 +10,7 @@ export const aiVocabularySuggestionSchema = z.object({
   ipa: z.string().trim().min(1).max(180),
   exampleEnglish: z.string().trim().min(1).max(600),
   exampleUkrainian: z.string().trim().min(1).max(600)
-});
+}).strict();
 
 export type AiVocabularySuggestion = z.output<typeof aiVocabularySuggestionSchema>;
 
@@ -33,7 +33,7 @@ export async function suggestVocabulary(
     schemaName: "vocabulary_suggestion",
     temperature: 0,
     topP: 1,
-    maxTokens: 220,
+    maxTokens: 1200,
     messages: [
       {
         role: "system",

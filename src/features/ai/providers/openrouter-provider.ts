@@ -5,6 +5,7 @@ import type {
   AICompletionRequest,
   AICompletionMetadata,
   AICompletionResult,
+  AIResponseFormat,
   AIProvider
 } from "@/features/ai/ports";
 import {AIProviderError} from "@/features/ai/ports";
@@ -40,6 +41,9 @@ type OpenRouterProviderOptions = {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_ATTEMPTS = 2;
+const MAX_SAFE_LOG_STRING_LENGTH = 2_000;
+const REQUEST_METHOD = "POST";
+const REASONING_EFFORT = "low";
 
 export class OpenRouterProvider implements AIProvider {
   readonly id = "openrouter" as const;
@@ -91,44 +95,41 @@ export class OpenRouterProvider implements AIProvider {
     const baseMetadata = {
       requestedModel: this.options.model
     };
+    const responseFormat = this.buildResponseFormat(request.responseFormat, startedAt);
+    const body = {
+      model: this.options.model,
+      messages: request.messages,
+      stream: false,
+      provider: {
+        require_parameters: true
+      },
+      reasoning: {
+        effort: REASONING_EFFORT,
+        exclude: true
+      },
+      temperature: request.temperature ?? 0,
+      ...(request.topP === undefined ? {} : {top_p: request.topP}),
+      ...(request.maxTokens === undefined ? {} : {max_tokens: request.maxTokens}),
+      ...(responseFormat ? {response_format: responseFormat} : {})
+    };
+    const requestLogMetadata = {
+      endpoint: OPENROUTER_CHAT_COMPLETIONS_URL,
+      method: REQUEST_METHOD,
+      requestedModel: this.options.model,
+      requestParameterNames: Object.keys(body)
+    };
 
     let response: Response;
     try {
       response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
-        method: "POST",
+        method: REQUEST_METHOD,
         signal: controller.signal,
         headers: {
           Authorization: `Bearer ${this.options.apiKey ?? ""}`,
           "Content-Type": "application/json",
           "X-Title": "Verba"
         },
-        body: JSON.stringify({
-          model: this.options.model,
-          messages: request.messages,
-          stream: false,
-          provider: {
-            require_parameters: true
-          },
-          reasoning: {
-            effort: "none",
-            exclude: true
-          },
-          temperature: request.temperature ?? 0,
-          ...(request.topP === undefined ? {} : {top_p: request.topP}),
-          ...(request.maxTokens === undefined ? {} : {max_tokens: request.maxTokens}),
-          ...(request.responseFormat
-            ? {
-                response_format: {
-                  type: "json_schema",
-                  json_schema: {
-                    name: request.responseFormat.schemaName,
-                    strict: true,
-                    schema: request.responseFormat.schema
-                  }
-                }
-              }
-            : {})
-        })
+        body: JSON.stringify(body)
       });
     } catch (error) {
       clearTimeout(timeout);
@@ -140,6 +141,7 @@ export class OpenRouterProvider implements AIProvider {
         {...baseMetadata, durationMs}
       );
       logOpenRouterEvent("warn", "request_error", {
+        ...requestLogMetadata,
         ...providerError.metadata,
         attempt,
         errorCode: providerError.code
@@ -157,6 +159,8 @@ export class OpenRouterProvider implements AIProvider {
     };
 
     if (!response.ok) {
+      const safeErrorBody =
+        response.status === 400 ? await readSafeResponseBody(response) : undefined;
       const code = response.status === 429
         ? "rate_limited"
         : response.status >= 500
@@ -168,9 +172,11 @@ export class OpenRouterProvider implements AIProvider {
         metadataBase
       );
       logOpenRouterEvent("warn", "http_error", {
+        ...requestLogMetadata,
         ...providerError.metadata,
         attempt,
-        errorCode: providerError.code
+        errorCode: providerError.code,
+        ...(safeErrorBody === undefined ? {} : {safeErrorBody})
       });
       throw providerError;
     }
@@ -184,6 +190,7 @@ export class OpenRouterProvider implements AIProvider {
         metadataBase
       );
       logOpenRouterEvent("error", "invalid_response", {
+        ...requestLogMetadata,
         ...providerError.metadata,
         attempt,
         zodValidationErrors: parsed.error.issues
@@ -200,6 +207,7 @@ export class OpenRouterProvider implements AIProvider {
         metadataBase
       );
       logOpenRouterEvent("error", "invalid_response", {
+        ...requestLogMetadata,
         ...providerError.metadata,
         attempt
       });
@@ -219,11 +227,18 @@ export class OpenRouterProvider implements AIProvider {
     };
 
     logOpenRouterEvent("info", "complete", {
+      ...requestLogMetadata,
       ...metadata,
       attempt
     });
 
     if (firstChoice.finish_reason === "length") {
+      logOpenRouterEvent("warn", "incomplete_response", {
+        ...requestLogMetadata,
+        ...metadata,
+        attempt,
+        errorCode: "incomplete_response"
+      });
       throw new AIProviderError(
         "incomplete_response",
         "OpenRouter response stopped because it reached the max token limit.",
@@ -232,6 +247,12 @@ export class OpenRouterProvider implements AIProvider {
     }
 
     if (!firstChoice.message.content) {
+      logOpenRouterEvent("error", "empty_completion", {
+        ...requestLogMetadata,
+        ...metadata,
+        attempt,
+        errorCode: "invalid_response"
+      });
       throw new AIProviderError(
         "invalid_response",
         "OpenRouter returned an empty completion.",
@@ -244,6 +265,43 @@ export class OpenRouterProvider implements AIProvider {
       metadata
     };
   }
+
+  private buildResponseFormat(
+    responseFormat: AIResponseFormat | undefined,
+    startedAt: number
+  ) {
+    if (!responseFormat) {
+      return undefined;
+    }
+
+    if (!isJsonSchemaObject(responseFormat.schema)) {
+      const providerError = new AIProviderError(
+        "invalid_response",
+        "OpenRouter structured output schema must be a JSON object.",
+        {
+          requestedModel: this.options.model,
+          durationMs: Date.now() - startedAt
+        }
+      );
+      logOpenRouterEvent("error", "invalid_request_schema", {
+        endpoint: OPENROUTER_CHAT_COMPLETIONS_URL,
+        method: REQUEST_METHOD,
+        requestedModel: this.options.model,
+        requestParameterNames: ["response_format"],
+        errorCode: providerError.code
+      });
+      throw providerError;
+    }
+
+    return {
+      type: "json_schema" as const,
+      json_schema: {
+        name: responseFormat.schemaName,
+        strict: true,
+        schema: responseFormat.schema
+      }
+    };
+  }
 }
 
 function shouldRetry(error: AIProviderError) {
@@ -252,6 +310,56 @@ function shouldRetry(error: AIProviderError) {
 
 function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
+}
+
+function isJsonSchemaObject(schema: unknown): schema is Record<string, unknown> {
+  return Boolean(schema) && typeof schema === "object" && !Array.isArray(schema);
+}
+
+async function readSafeResponseBody(response: Response) {
+  const text = await response.text();
+  if (!text) {
+    return "";
+  }
+
+  try {
+    return sanitizeForLog(JSON.parse(text) as unknown);
+  } catch {
+    return truncateForLog(text);
+  }
+}
+
+function sanitizeForLog(value: unknown): unknown {
+  if (typeof value === "string") {
+    return truncateForLog(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForLog(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        isSensitiveLogKey(key) ? "[redacted]" : sanitizeForLog(entry)
+      ])
+    );
+  }
+
+  return value;
+}
+
+function isSensitiveLogKey(key: string) {
+  return /authorization|api[-_]?key|openrouter_api_key|token|secret|password/i.test(key);
+}
+
+function truncateForLog(value: string) {
+  if (value.length <= MAX_SAFE_LOG_STRING_LENGTH) {
+    return value;
+  }
+
+  return `${value.slice(0, MAX_SAFE_LOG_STRING_LENGTH)}...`;
 }
 
 function logOpenRouterEvent(

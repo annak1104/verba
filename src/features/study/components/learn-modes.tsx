@@ -16,7 +16,7 @@ export async function LearnModes({active}: Readonly<{active: "add" | "listening"
   const t = await getTranslations("Learn.modes");
 
   return (
-    <GlassCard className="grid grid-cols-3 gap-1 p-1.5">
+    <GlassCard className="grid grid-cols-3 gap-1.5 p-1.5">
       {modes.map((mode) => {
         const Icon = mode.icon;
         const selected = active === mode.id || (active === "add" && mode.id === "add");
@@ -25,12 +25,15 @@ export async function LearnModes({active}: Readonly<{active: "add" | "listening"
           <Button
             key={mode.id}
             asChild
-            className={cn("h-11 rounded-2xl px-2 text-xs", selected && "bg-primary text-primary-foreground")}
+            className={cn(
+              "h-12 min-w-0 rounded-2xl px-3 text-[13px] sm:px-5 sm:text-sm",
+              selected && "bg-primary text-primary-foreground"
+            )}
             variant={selected ? "default" : "ghost"}
           >
             <Link href={mode.href as Route}>
               <Icon className="size-4" />
-              {t(mode.labelKey)}
+              <span className="truncate">{t(mode.labelKey)}</span>
             </Link>
           </Button>
         );

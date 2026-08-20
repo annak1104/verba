@@ -74,6 +74,7 @@ function DeckCard({deck}: Readonly<{deck: Deck}>) {
       </div>
       <div className="grid grid-cols-4 gap-2">
         <Button
+          className="size-12"
           disabled={pending}
           size="icon"
           type="button"
@@ -83,6 +84,7 @@ function DeckCard({deck}: Readonly<{deck: Deck}>) {
           <ArrowUp className="size-4" />
         </Button>
         <Button
+          className="size-12"
           disabled={pending}
           size="icon"
           type="button"
@@ -92,7 +94,7 @@ function DeckCard({deck}: Readonly<{deck: Deck}>) {
           <ArrowDown className="size-4" />
         </Button>
         <Button
-          className="col-span-2"
+          className="col-span-2 min-h-12 px-5 py-3 text-sm sm:text-base"
           disabled={pending}
           type="button"
           variant="destructive"
@@ -103,7 +105,9 @@ function DeckCard({deck}: Readonly<{deck: Deck}>) {
         </Button>
       </div>
       <details>
-        <summary className="cursor-pointer list-none text-sm font-bold text-primary">{t("renameEdit")}</summary>
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center rounded-2xl px-4 py-2 text-sm font-bold text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          {t("renameEdit")}
+        </summary>
         <div className="mt-4">
           <DeckForm deck={deck} submitLabel={t("saveDeck")} onSubmit={(values) => updateDeckAction(deck.id, values)} />
         </div>

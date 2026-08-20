@@ -197,6 +197,7 @@ function WordRow({
 
       <div className="grid grid-cols-3 gap-2">
         <Button
+          className="px-4 py-3"
           disabled={pending}
           type="button"
           variant="glass"
@@ -206,6 +207,7 @@ function WordRow({
           {tCommon("favorite")}
         </Button>
         <Button
+          className="px-4 py-3"
           disabled={pending}
           type="button"
           variant="destructive"
@@ -215,7 +217,7 @@ function WordRow({
           {tCommon("delete")}
         </Button>
         <details className="contents">
-          <summary className="glass-control inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl text-sm font-bold">
+          <summary className="glass-control inline-flex min-h-12 cursor-pointer items-center justify-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold">
             <Pencil className="size-4" />
             {tCommon("edit")}
           </summary>
