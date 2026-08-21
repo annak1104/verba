@@ -41,6 +41,18 @@ const envSchema = z
     AI_PROVIDER: z.string().trim().default("openrouter"),
     OPENROUTER_API_KEY: optionalEnvString,
     OPENROUTER_MODEL: z.string().trim().min(1).default("dots-studio/dots-3-note-preview:free"),
+    OPENROUTER_MODELS: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) =>
+        value
+          ? value
+              .split(",")
+              .map((model) => model.trim())
+              .filter(Boolean)
+          : []
+      ),
   })
   .superRefine((value, ctx) => {
     if (!isProduction) {
@@ -80,6 +92,7 @@ export const env = envSchema.parse({
   AI_PROVIDER: process.env.AI_PROVIDER,
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
   OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
+  OPENROUTER_MODELS: process.env.OPENROUTER_MODELS,
 });
 
 export type Env = typeof env;

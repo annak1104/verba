@@ -22,10 +22,12 @@ export type AICompletionMetadata = {
   requestedModel: string;
   returnedModel?: string;
   durationMs: number;
+  modelAttempt?: number;
   inputTokens?: number;
   outputTokens?: number;
   finishReason?: string;
   httpStatus?: number;
+  retryAfterMs?: number;
 };
 
 export type AICompletionResult = {

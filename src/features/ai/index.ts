@@ -24,6 +24,7 @@ function createProvider(): AIProvider | null {
   if (env.AI_PROVIDER === "openrouter") {
     return new OpenRouterProvider({
       model: env.OPENROUTER_MODEL,
+      models: env.OPENROUTER_MODELS,
       ...(env.OPENROUTER_API_KEY ? {apiKey: env.OPENROUTER_API_KEY} : {})
     });
   }

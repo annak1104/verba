@@ -36,22 +36,26 @@ const openRouterResponseSchema = z.object({
 type OpenRouterProviderOptions = {
   apiKey?: string;
   model: string;
+  models?: string[];
   timeoutMs?: number;
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
-const MAX_ATTEMPTS = 2;
+const MAX_MODEL_ATTEMPTS = 3;
 const MAX_SAFE_LOG_STRING_LENGTH = 2_000;
 const REQUEST_METHOD = "POST";
 const REASONING_EFFORT = "low";
 
 export class OpenRouterProvider implements AIProvider {
   readonly id = "openrouter" as const;
+  private readonly models: string[];
 
-  constructor(private readonly options: OpenRouterProviderOptions) {}
+  constructor(private readonly options: OpenRouterProviderOptions) {
+    this.models = buildModelAttempts(options.model, options.models);
+  }
 
   isAvailable() {
-    return Boolean(this.options.apiKey);
+    return Boolean(this.options.apiKey) && this.models.length > 0;
   }
 
   async complete(request: AICompletionRequest): Promise<AICompletionResult> {
@@ -60,24 +64,40 @@ export class OpenRouterProvider implements AIProvider {
     }
 
     let lastError: AIProviderError | null = null;
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    for (const [index, model] of this.models.entries()) {
+      const attempt = index + 1;
       try {
-        return await this.completeOnce(request, attempt);
+        return await this.completeOnce(request, attempt, model);
       } catch (error) {
         if (!(error instanceof AIProviderError)) {
           throw error;
         }
 
         lastError = error;
-        if (attempt >= MAX_ATTEMPTS || !shouldRetry(error)) {
+        const fallbackReason = getFallbackReason(error);
+        const nextModel = this.models[index + 1];
+        if (!fallbackReason || !nextModel) {
           throw error;
         }
 
-        logOpenRouterEvent("warn", "retry", {
+        logOpenRouterEvent("warn", "fallback", {
+          endpoint: OPENROUTER_CHAT_COMPLETIONS_URL,
+          method: REQUEST_METHOD,
+          model,
           ...error.metadata,
           attempt,
-          errorCode: error.code
+          status: error.metadata?.httpStatus,
+          durationMs: error.metadata?.durationMs,
+          finishReason: error.metadata?.finishReason ?? null,
+          errorCode: error.code,
+          fallbackReason,
+          nextModel,
+          nextAttempt: attempt + 1
         });
+
+        if (fallbackReason === "rate_limited" && error.metadata?.retryAfterMs) {
+          await sleep(error.metadata.retryAfterMs);
+        }
       }
     }
 
@@ -86,18 +106,20 @@ export class OpenRouterProvider implements AIProvider {
 
   private async completeOnce(
     request: AICompletionRequest,
-    attempt: number
+    attempt: number,
+    model: string
   ): Promise<AICompletionResult> {
     const startedAt = Date.now();
     const timeoutMs = this.options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const baseMetadata = {
-      requestedModel: this.options.model
+      requestedModel: model,
+      modelAttempt: attempt
     };
     const responseFormat = this.buildResponseFormat(request.responseFormat, startedAt);
     const body = {
-      model: this.options.model,
+      model,
       messages: request.messages,
       stream: false,
       provider: {
@@ -115,7 +137,8 @@ export class OpenRouterProvider implements AIProvider {
     const requestLogMetadata = {
       endpoint: OPENROUTER_CHAT_COMPLETIONS_URL,
       method: REQUEST_METHOD,
-      requestedModel: this.options.model,
+      model,
+      requestedModel: model,
       requestParameterNames: Object.keys(body)
     };
 
@@ -144,6 +167,9 @@ export class OpenRouterProvider implements AIProvider {
         ...requestLogMetadata,
         ...providerError.metadata,
         attempt,
+        status: providerError.metadata?.httpStatus,
+        durationMs: providerError.metadata?.durationMs,
+        finishReason: providerError.metadata?.finishReason ?? null,
         errorCode: providerError.code
       });
       throw providerError;
@@ -161,6 +187,7 @@ export class OpenRouterProvider implements AIProvider {
     if (!response.ok) {
       const safeErrorBody =
         response.status === 400 ? await readSafeResponseBody(response) : undefined;
+      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
       const code = response.status === 429
         ? "rate_limited"
         : response.status >= 500
@@ -169,12 +196,18 @@ export class OpenRouterProvider implements AIProvider {
       const providerError = new AIProviderError(
         code,
         `OpenRouter request failed with status ${response.status}.`,
-        metadataBase
+        {
+          ...metadataBase,
+          ...(retryAfterMs === undefined ? {} : {retryAfterMs})
+        }
       );
       logOpenRouterEvent("warn", "http_error", {
         ...requestLogMetadata,
         ...providerError.metadata,
         attempt,
+        status: response.status,
+        durationMs,
+        finishReason: null,
         errorCode: providerError.code,
         ...(safeErrorBody === undefined ? {} : {safeErrorBody})
       });
@@ -229,6 +262,7 @@ export class OpenRouterProvider implements AIProvider {
     logOpenRouterEvent("info", "complete", {
       ...requestLogMetadata,
       ...metadata,
+      status: metadata.httpStatus,
       attempt
     });
 
@@ -304,8 +338,32 @@ export class OpenRouterProvider implements AIProvider {
   }
 }
 
-function shouldRetry(error: AIProviderError) {
-  return ["timeout", "rate_limited", "server_error"].includes(error.code);
+function buildModelAttempts(primaryModel: string, fallbackModels: string[] | undefined) {
+  const uniqueModels = new Set(
+    [primaryModel, ...(fallbackModels ?? [])].map((model) => model.trim()).filter(Boolean)
+  );
+
+  return Array.from(uniqueModels).slice(0, MAX_MODEL_ATTEMPTS);
+}
+
+function getFallbackReason(error: AIProviderError) {
+  if (error.code === "rate_limited") {
+    return "rate_limited";
+  }
+
+  if (error.code === "timeout") {
+    return "timeout";
+  }
+
+  if (error.code === "server_error") {
+    return "provider_unavailable";
+  }
+
+  if (error.code === "http_error" && error.metadata?.httpStatus === undefined) {
+    return "provider_unavailable";
+  }
+
+  return null;
 }
 
 function isAbortError(error: unknown) {
@@ -314,6 +372,28 @@ function isAbortError(error: unknown) {
 
 function isJsonSchemaObject(schema: unknown): schema is Record<string, unknown> {
   return Boolean(schema) && typeof schema === "object" && !Array.isArray(schema);
+}
+
+function parseRetryAfterMs(retryAfter: string | null) {
+  if (!retryAfter) {
+    return undefined;
+  }
+
+  const seconds = Number(retryAfter);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return seconds * 1000;
+  }
+
+  const retryAt = Date.parse(retryAfter);
+  if (Number.isNaN(retryAt)) {
+    return undefined;
+  }
+
+  return Math.max(0, retryAt - Date.now());
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function readSafeResponseBody(response: Response) {
